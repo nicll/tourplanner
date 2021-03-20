@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TourPlannerCore\TourPlannerCore.csproj" />
-    <ProjectReference Include="..\TourPlannerPostgresAdapter\TourPlannerPostgresAdapter.csproj" />
+    <ProjectReference Include="..\TourPlannerPostgres\TourPlannerPostgres.csproj" />
   </ItemGroup>
 
 </Project>
