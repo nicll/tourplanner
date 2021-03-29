@@ -4,17 +4,108 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TourPlanner.GUI.Views"
+        xmlns:vm="clr-namespace:TourPlanner.GUI.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="TourPlanner Overview" Height="400" Width="600">
+    <!-- ToDo: make height auto -->
     <Window.DataContext>
-        <local:MainWindowViewModel/>
+        <vm:MainWindowViewModel/>
     </Window.DataContext>
-    <Grid>
-        <Button Content="Press me!" Command="{Binding Path=ButtonCommand}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-        <Label Content="{Binding ExampleText}"  HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.15,-1.252"/>
-        <Label Content="{Binding ExampleCounter}" HorizontalAlignment="Left" Margin="202,35,0,0" VerticalAlignment="Top"/>
-        <TextBox HorizontalAlignment="Left" Margin="18,97,0,0" Text="{Binding MeasuredText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" VerticalAlignment="Top" Width="382"/>
-        <Label Content="{Binding MeasuredTextLength}" HorizontalAlignment="Left" Margin="405,101,0,0" VerticalAlignment="Top"/>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" Grid.Row="0">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Connect"/>
+                <MenuItem Header="_Add"/>
+                <MenuItem Header="_Delete"/>
+                <MenuItem Header="_Save" InputGestureText="Ctrl+S"/>
+                <MenuItem Header="_Exit" InputGestureText="Ctrl+Q"/>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="Something"/>
+            </MenuItem>
+            <MenuItem Header="_Data Migration">
+                <MenuItem Header="_Import"/>
+                <MenuItem Header="_Export"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="About"/>
+            </MenuItem>
+        </Menu>
+        <Grid Grid.Row="1" Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-    </Grid>
+            <TextBox Grid.Row="1"/>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="4*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- FixMe: GridSplitter may put elements outside the window -->
+                <GridSplitter Grid.Column="1"  VerticalAlignment="Stretch" HorizontalAlignment="Center" ResizeBehavior="PreviousAndNext" Width="4"/>
+
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <!-- Temporarily set here -->
+                    <Label Grid.Row="0" Content="Tours"/>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding ShownTours}"/>
+                </Grid>
+
+                <!-- ToDo: pack this in UserControl TourView -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <GridSplitter Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" Height="4"/>
+                    <Grid Grid.Row="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <DockPanel Grid.Row="0">
+                            <Label DockPanel.Dock="Left" Content="Name:"/>
+                            <TextBox Margin="2"/>
+                        </DockPanel>
+                        <TabControl Grid.Row="1">
+                            <TabItem Header="Route">
+                                <Image/>
+                            </TabItem>
+                            <TabItem Header="Description">
+                                <TextBox/>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                    <Grid Grid.Row="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <DockPanel Grid.Row="0" Margin="2">
+                            <Button DockPanel.Dock="Right" Padding="4" Content="Edit"/>
+                            <Button DockPanel.Dock="Right" Padding="4" Content="Delete"/>
+                            <Button DockPanel.Dock="Right" Padding="4" Content="Add"/>
+                            <Label DockPanel.Dock="Left" Content="Logs:"/>
+                        </DockPanel>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedTour.Route.Stops}" AutoGenerateColumns="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Name" Binding="{Binding }"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+    </DockPanel>
 </Window>
