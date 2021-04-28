@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <RootNamespace>TourPlanner.DB.Postgres</RootNamespace>
+    <AssemblyName>TourPlanner.DB.Postgres</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TourPlanner.Core\TourPlanner.Core.csproj" />
+  </ItemGroup>
+
+</Project>
