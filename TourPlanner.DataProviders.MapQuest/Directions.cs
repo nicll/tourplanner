@@ -33,13 +33,14 @@ namespace TourPlanner.DataProviders.MapQuest
 
         private async Task<Route> FetchRoute(string from, string to)
         {
-            // ToDo: add logging
+            _log.Debug("Requesting route from API from=\"" + from + "\" to=\"" + to + "\"");
             var requestUrl = String.Format(DirectionsRequestFormat, _apiKey, from, to);
-
             using var cts = new CancellationTokenSource(_timeout);
             var response = await _client.GetStreamAsync(requestUrl, cts.Token);
+            _log.Debug("Received response from API.");
 
             var route = await JsonSerializer.DeserializeAsync<Route>(response, _jsonOpts) with { StartLocation = from, EndLocation = to };
+            _log.Info("Received proper response from API: RouteId=" + route.RouteId);
 
             return route;
         }

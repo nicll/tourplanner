@@ -32,19 +32,27 @@ namespace TourPlanner.DataProviders.MapQuest
         public ValueTask ClearCache()
         {
             foreach (var filePath in Directory.EnumerateFiles(RelativeImageContainerPath))
+            {
                 File.Delete(filePath);
+                _log.Debug("Deleted file in image cache: " + filePath);
+            }
 
+            _log.Info("Cleared image cache.");
             return ValueTask.CompletedTask;
         }
 
         private async Task DownloadImage(Route route)
         {
+            _log.Debug("Requesting image for route from API: RouteId=\"" + route.RouteId + "\"");
             var imagePath = GetAbsoluteRouteImagePath(route);
+            _log.Debug("Image will be saved to: " + imagePath);
 
             using var cts = new CancellationTokenSource(_timeout);
             var image = await _client.GetByteArrayAsync(String.Format(ImageRequestFormat, _apiKey, route.RouteId), cts.Token);
+            _log.Debug("Received response from API.");
 
             await File.WriteAllBytesAsync(imagePath, image);
+            _log.Info("Saved image for route \"" + route.RouteId + "\" in \"" + imagePath + "\".");
         }
 
         private static string GetRouteImageFilename(Route route)
