@@ -16,7 +16,7 @@ namespace TourPlanner.GUI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private bool _darkMode = false, _searchBarVisible = false;
+        private bool _darkMode = false, _searchBarVisible = false, _includeDescChecked = false;
         private string _searchText = String.Empty;
         private readonly List<Tour> _tours;
         private readonly Configuration _config;
@@ -44,6 +44,16 @@ namespace TourPlanner.GUI.ViewModels
         }
 
         public Visibility SearchBarVisibility => IsSearchBarVisible ? Visibility.Visible : Visibility.Collapsed;
+
+        public bool IsIncludeDescriptionChecked
+        {
+            get => _includeDescChecked;
+            set
+            {
+                SetProperty(ref _includeDescChecked, value);
+                UpdateShownTours();
+            }
+        }
 
         public string SearchText
         {
@@ -258,13 +268,17 @@ namespace TourPlanner.GUI.ViewModels
 
         private void UpdateShownTours()
         {
+            Func<Tour, bool> isContained = IsIncludeDescriptionChecked ? IsInNameOrDesc : IsInName;
             ShownTours.Clear();
 
             foreach (var tour in _tours)
             {
-                if (tour.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                if (isContained(tour))
                     ShownTours.Add(tour);
             }
+
+            bool IsInName(Tour tour) => tour.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+            bool IsInNameOrDesc(Tour tour) => IsInName(tour) || tour.CustomDescription.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
