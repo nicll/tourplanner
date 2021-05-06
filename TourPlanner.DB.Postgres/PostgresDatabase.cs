@@ -8,12 +8,17 @@ namespace TourPlanner.DB.Postgres
 {
     public class PostgresDatabase : IDatabaseClient
     {
+        public Task<ICollection<Tour>> QueryTours()
+        {
+            throw new NotImplementedException();
+        }
+
         public Task AddTour(Tour tour)
         {
             throw new NotImplementedException();
         }
 
-        public Task<ICollection<Tour>> QueryTours()
+        public Task UpdateTour(Tour tour)
         {
             throw new NotImplementedException();
         }

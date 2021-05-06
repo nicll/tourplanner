@@ -11,6 +11,8 @@ namespace TourPlanner.Core.Interfaces
 
         Task AddTour(Tour tour);
 
+        Task UpdateTour(Tour tour);
+
         Task RemoveTour(Tour tour);
     }
 }
