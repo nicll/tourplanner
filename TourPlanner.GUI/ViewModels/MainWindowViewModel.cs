@@ -1,63 +1,270 @@
-﻿using System;
+﻿using AsyncAwaitBestPractices.MVVM;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using TourPlanner.Core.Configuration;
+using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
+using TourPlanner.DataProviders.MapQuest;
+using TourPlanner.Reporting.PDF;
+using log4net;
 
 namespace TourPlanner.GUI.ViewModels
 {
-    public class MainWindowViewModel : INotifyPropertyChanged
+    public class MainWindowViewModel : ViewModelBase
     {
-        private int _exampleCounter = 0;
-        private string _measuredText = "...";
+        private bool _darkMode = false, _searchBarVisible = false;
+        private string _searchText = String.Empty;
+        private readonly List<Tour> _tours;
+        private readonly Configuration _config;
+        private Tour _selectedTour;
+        private readonly MapQuestApiFactory _mapFactory;
+        private IDirectionsProvider _dir;
+        private IMapImageProvider _img;
+        private readonly IDatabaseClient _db;
+        private readonly ILog _log;
 
-        public int ExampleCounter
+        public bool IsDarkMode
         {
-            get => _exampleCounter;
+            get => _darkMode;
+            set => SetProperty(ref _darkMode, value);
+        }
+
+        public bool IsSearchBarVisible
+        {
+            get => _searchBarVisible;
             set
             {
-                _exampleCounter = value;
-                OnPropertyChanged(nameof(ExampleCounter)); // this property changed
-                OnPropertyChanged(nameof(ExampleText)); // dependent property also changed!
+                SetProperty(ref _searchBarVisible, value);
+                OnPropertyChanged(nameof(SearchBarVisibility));
             }
         }
 
-        public string ExampleText => "The button was pressed " + ExampleCounter + " time(s).";
+        public Visibility SearchBarVisibility => IsSearchBarVisible ? Visibility.Visible : Visibility.Collapsed;
 
-        public string MeasuredText
+        public string SearchText
         {
-            get => _measuredText;
+            get => _searchText;
             set
             {
-                _measuredText = value;
-                OnPropertyChanged(nameof(MeasuredText)); // this property changed
-                OnPropertyChanged(nameof(MeasuredTextLength)); // dependent property changed
+                SetProperty(ref _searchText, value);
+                UpdateShownTours();
             }
         }
 
-        public int MeasuredTextLength => MeasuredText.Length;
+        public Tour SelectedTour
+        {
+            get => _selectedTour;
+            set => SetProperty(ref _selectedTour, value);
+        }
+
+        public ObservableCollection<Tour> ShownTours { get; protected set; }
+
+        public ICommand ResetConnectionCommand { get; }
+
+        public ICommand SwitchThemeCommand { get; }
+
+        public ICommand SwitchSearchBarVisibilityCommand { get; }
+
+        public ICommand ExitApplicationCommand { get; }
 
         public ICommand AddTourCommand { get; }
 
         public ICommand DeleteTourCommand { get; }
 
-        public ObservableCollection<Tour> ShownTours { get; }
+        public ICommand AddTourLogCommand { get; }
 
-        public Tour SelectedTour { get; set; }
+        public ICommand DeleteTourLogCommand { get; }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public ICommand GenerateSummaryReportCommand { get; }
+
+        public ICommand GenerateTourReportCommand { get; }
+
+        public ICommand ClearSearchTextCommand { get; }
 
         public MainWindowViewModel()
         {
+            _log = LogManager.GetLogger(typeof(MainWindowViewModel));
+            _config = Utils.LoadConfig("connection.config");
+            _mapFactory = new();
+            Task.Run(async () => _dir = await _mapFactory.CreateDirectionsProvider(_config.DirectionsApiConfig));
+            Task.Run(async () => _img = await _mapFactory.CreateMapImageProvider(_config.MapImageApiConfig));
+            _tours = new();
+
+            ResetConnectionCommand = new RelayCommand(ResetConnection);
+            SwitchThemeCommand = new RelayCommand(SwitchTheme);
+            SwitchSearchBarVisibilityCommand = new RelayCommand(SwitchSearchBarVisibility);
+            ExitApplicationCommand = new AsyncCommand(ExitApplication);
+            AddTourCommand = new AsyncCommand(AddTour);
+            DeleteTourCommand = new AsyncCommand(DeleteTour);
+            AddTourLogCommand = new RelayCommand(AddTourLog);
+            DeleteTourLogCommand = new RelayCommand(DeleteTourLog);
+            GenerateSummaryReportCommand = new AsyncCommand(GenerateSummaryReport);
+            GenerateTourReportCommand = new AsyncCommand(GenerateTourReport);
+            ClearSearchTextCommand = new RelayCommand(ClearSearchText);
         }
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        protected void UpdateLoadedTours(IList<Tour> tours)
+        {
+            _tours.Clear();
+            _tours.AddRange(tours);
+        }
+
+        private void ResetConnection()
+            => _mapFactory.ResetConnection();
+
+        private void SwitchTheme()
+        {
+            IsDarkMode = !IsDarkMode;
+            AdonisUI.ResourceLocator.SetColorScheme(Application.Current.Resources,
+                IsDarkMode ? AdonisUI.ResourceLocator.DarkColorScheme : AdonisUI.ResourceLocator.LightColorScheme);
+        }
+
+        private void SwitchSearchBarVisibility()
+            => IsSearchBarVisible = !IsSearchBarVisible;
+
+        private Task ExitApplication()
+        {
+            Application.Current.Shutdown();
+            return Task.CompletedTask;
+        }
+
+        private async Task AddTour()
+        {
+            if (_dir is null || _img is null)
+            {
+                _log.Error("Tried adding tour when application was not yet initialized.");
+                MessageBox.Show("The application is currently not fully initialized.", "Please wait", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var window = new Views.AddTourView();
+            var tourVM = new AddTourViewModel(window)
+            {
+                CancelCommand = new RelayCommand(Cancel),
+                FinishCommand = new RelayCommand(Finish)
+            };
+
+            if (window.ShowDialog() is not true) // false or null
+                return;
+
+            var route = await _dir.GetRoute(tourVM.StartLocation, tourVM.EndLocation);
+
+            if (route is null) // not found
+            {
+                _log.Error("No possible route was found for the given inputs.");
+                MessageBox.Show("No possible route could be found.", "Cannot add tour", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var imagePath = await _img.GetImage(route);
+
+            if (imagePath is null)
+            {
+                _log.Warn("No image was found for the given route.");
+                MessageBox.Show("No image for the route could be loaded.", "Cannot load tour image", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            var newTour = new Tour
+            {
+                TourId = Guid.NewGuid(),
+                Name = tourVM.Name,
+                CustomDescription = String.Empty,
+                ImagePath = imagePath,
+                Route = route,
+                Log = new List<LogEntry>()
+            };
+
+            _log.Info("Adding new tour with TourId=\"" + newTour.TourId + "\".");
+            await _db.AddTour(newTour);
+            _tours.Add(newTour);
+            UpdateShownTours();
+
+            void Cancel()
+            {
+                window.DialogResult = false;
+                window.Close();
+            }
+
+            void Finish()
+            {
+                window.DialogResult = true;
+                window.Close();
+            }
+        }
+
+        private async Task DeleteTour()
+        {
+            var selectedTour = SelectedTour;
+
+            if (selectedTour is null)
+                return;
+
+            _log.Info("Deleting tour with TourId=\"" + selectedTour.TourId + "\".");
+            SelectedTour = null;
+            _tours.Remove(selectedTour);
+            ShownTours.Remove(selectedTour);
+            await _db.RemoveTour(selectedTour);
+        }
+
+        private void AddTourLog()
+        {
+
+        }
+
+        private void DeleteTourLog()
+        {
+
+        }
+
+        private Task GenerateSummaryReport()
+        {
+            _log.Debug("Generating summary report.");
+            var savePath = Utils.GetReportSavePath("summary");
+
+            if (String.IsNullOrEmpty(savePath))
+                return Task.CompletedTask;
+
+            _log.Debug("User selected \"" + savePath + "\" for summary report.");
+            ReportGenerator.GenerateSummaryReport(_tours, savePath);
+            Utils.ShowFile(savePath);
+            _log.Info("Generated summary report: " + savePath);
+            return Task.CompletedTask;
+        }
+
+        private Task GenerateTourReport()
+        {
+            if (SelectedTour is not Tour selectedTour)
+                return Task.CompletedTask;
+
+            _log.Debug("Generating tour report for tour \"" + selectedTour.TourId + "\".");
+            var savePath = Utils.GetReportSavePath(selectedTour.Name);
+
+            if (String.IsNullOrEmpty(savePath))
+                return Task.CompletedTask;
+
+            _log.Debug("User selected \"" + savePath + "\" for tour report for tour \"" + selectedTour.TourId + "\".");
+            ReportGenerator.GenerateTourReport(selectedTour, savePath);
+            Utils.ShowFile(savePath);
+            _log.Info("Generated tour report \"" + savePath + "\" for tour \"" + selectedTour.TourId + "\".");
+            return Task.CompletedTask;
+        }
+
+        private void ClearSearchText()
+            => SearchText = String.Empty;
+
+        private void UpdateShownTours()
+        {
+            ShownTours.Clear();
+
+            foreach (var tour in _tours)
+            {
+                if (tour.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                    ShownTours.Add(tour);
+            }
+        }
     }
 }
