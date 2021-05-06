@@ -13,8 +13,9 @@
     <PackageReference Include="AdonisUI" Version="1.17.0" />
     <PackageReference Include="AdonisUI.ClassicTheme" Version="1.17.0" />
     <PackageReference Include="AsyncAwaitBestPractices.MVVM" Version="5.1.0" />
+    <PackageReference Include="log4net" Version="2.0.12" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +23,18 @@
     <ProjectReference Include="..\TourPlanner.DataProviders.MapQuest\TourPlanner.DataProviders.MapQuest.csproj" />
     <ProjectReference Include="..\TourPlanner.DB.Postgres\TourPlanner.DB.Postgres.csproj" />
     <ProjectReference Include="..\TourPlanner.Reporting.PDF\TourPlanner.Reporting.PDF.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="App.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="connection.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="logging.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
