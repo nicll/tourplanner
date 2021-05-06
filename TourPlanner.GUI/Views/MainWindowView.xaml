@@ -1,111 +1,108 @@
-﻿<Window x:Class="TourPlanner.GUI.Views.MainWindowView"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TourPlanner.GUI.Views"
-        xmlns:vm="clr-namespace:TourPlanner.GUI.ViewModels"
-        mc:Ignorable="d"
-        Title="TourPlanner Overview" Height="400" Width="600">
+﻿<actl:AdonisWindow x:Class="TourPlanner.GUI.Views.MainWindowView"
+                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                   xmlns:local="clr-namespace:TourPlanner.GUI.Views"
+                   xmlns:vm="clr-namespace:TourPlanner.GUI.ViewModels"
+                   xmlns:aui="clr-namespace:AdonisUI;assembly=AdonisUI"
+                   xmlns:actl="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+                   xmlns:aext="clr-namespace:AdonisUI.Extensions;assembly=AdonisUI"
+                   mc:Ignorable="d"
+                   d:DataContext="{d:DesignInstance Type=vm:DesignMainWindowViewModel, IsDesignTimeCreatable=True}"
+                   Title="TourPlanner Overview" Height="400" Width="600">
     <!-- ToDo: make height auto -->
     <Window.DataContext>
-        <vm:MainWindowViewModel/>
+        <vm:DesignMainWindowViewModel/>
     </Window.DataContext>
+    <Window.Style>
+        <Style TargetType="Window" BasedOn="{StaticResource {x:Type Window}}"/>
+    </Window.Style>
+    <Window.InputBindings>
+        <KeyBinding Gesture="Ctrl+Q" Command="{Binding ExitApplicationCommand}"/>
+        <KeyBinding Gesture="F11" Command="{Binding SwitchSearchBarVisibilityCommand}"/>
+        <KeyBinding Gesture="F12" Command="{Binding SwitchThemeCommand}"/>
+    </Window.InputBindings>
     <DockPanel>
         <Menu DockPanel.Dock="Top" Grid.Row="0">
             <MenuItem Header="_File">
-                <MenuItem Header="_Connect"/>
-                <MenuItem Header="_Add"/>
-                <MenuItem Header="_Delete"/>
-                <MenuItem Header="_Save" InputGestureText="Ctrl+S"/>
-                <MenuItem Header="_Exit" InputGestureText="Ctrl+Q"/>
+                <MenuItem Header="_Reconnect API" Command="{Binding ResetConnectionCommand}"/>
+                <MenuItem Header="_Show Search Bar" InputGestureText="F11" Command="{Binding SwitchSearchBarVisibilityCommand}" IsChecked="{Binding IsSearchBarVisible}"/>
+                <MenuItem Header="_Dark Theme" InputGestureText="F12" Command="{Binding SwitchThemeCommand}" IsChecked="{Binding IsDarkMode}"/>
+                <MenuItem Header="_Exit" InputGestureText="Ctrl+Q" Command="{Binding ExitApplicationCommand}"/>
             </MenuItem>
             <MenuItem Header="_Edit">
-                <MenuItem Header="Something"/>
+                <MenuItem Header="_Tour">
+                    <MenuItem Header="_Add Tour" Command="{Binding AddTourCommand}"/>
+                    <MenuItem Header="_Delete Tour" Command="{Binding DeleteTourCommand}"/>
+                </MenuItem>
+                <MenuItem Header="Tour _Logs">
+                    <MenuItem Header="_Add Tour Log Entry" Command="{Binding AddTourLogCommand}"/>
+                    <MenuItem Header="_Delete Tour Log Entry" Command="{Binding DeleteTourLogCommand}"/>
+                </MenuItem>
             </MenuItem>
             <MenuItem Header="_Data Migration">
                 <MenuItem Header="_Import"/>
                 <MenuItem Header="_Export"/>
             </MenuItem>
+            <MenuItem Header="_Reports">
+                <MenuItem Header="_Summary Report" Command="{Binding GenerateSummaryReportCommand}"/>
+                <MenuItem Header="_Tour Report" Command="{Binding GenerateTourReportCommand}"/>
+            </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="About"/>
             </MenuItem>
         </Menu>
-        <Grid Grid.Row="1" Margin="0">
+        <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <TextBox Grid.Row="1"/>
+            <DockPanel Grid.Row="1" Visibility="{Binding SearchBarVisibility}">
+                <Button DockPanel.Dock="Right" Content="Clear" Command="{Binding ClearSearchTextCommand}"/>
+                <TextBox DockPanel.Dock="Left" MaxLength="64" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+            </DockPanel>
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="4*"/>
+                    <ColumnDefinition Width="3*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- FixMe: GridSplitter may put elements outside the window -->
-                <GridSplitter Grid.Column="1"  VerticalAlignment="Stretch" HorizontalAlignment="Center" ResizeBehavior="PreviousAndNext" Width="4"/>
+                <GridSplitter Grid.Column="1"  VerticalAlignment="Stretch" HorizontalAlignment="Center" ResizeBehavior="PreviousAndNext" Width="4" Background="{DynamicResource {x:Static aui:Brushes.Layer1BorderBrush}}"/>
 
-                <Grid Grid.Column="0">
+                <GroupBox Grid.Column="0" Header="Tours" FontWeight="Normal" FontStyle="Normal" Padding="4">
+                    <ListBox ItemsSource="{Binding ShownTours}" SelectedItem="{Binding Path=SelectedTour, Mode=TwoWay}"
+                             aext:ScrollViewerExtension.HideScrollBarsUntilMouseOver="True"
+                             aext:ScrollViewerExtension.VerticalScrollBarExpansionMode="NeverExpand"
+                             aext:ScrollViewerExtension.VerticalScrollBarPlacement="Overlay"
+                             aext:ScrollViewerExtension.HorizontalScrollBarExpansionMode="NeverExpand"
+                             aext:ScrollViewerExtension.HorizontalScrollBarPlacement="Docked">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </GroupBox>
+                <!--
+                <Grid Grid.Column="0" Background="{DynamicResource {x:Static aui:Brushes.Layer1BackgroundBrush}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <!-- Temporarily set here -->
-                    <Label Grid.Row="0" Content="Tours"/>
-                    <ListBox Grid.Row="1" ItemsSource="{Binding ShownTours}"/>
-                </Grid>
+                    <Label Grid.Row="0" Padding="4" Content="Tours"/>
+                </Grid>-->
 
-                <!-- ToDo: pack this in UserControl TourView -->
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <GridSplitter Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" Height="4"/>
-                    <Grid Grid.Row="0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <DockPanel Grid.Row="0">
-                            <Label DockPanel.Dock="Left" Content="Name:"/>
-                            <TextBox Margin="2"/>
-                        </DockPanel>
-                        <TabControl Grid.Row="1">
-                            <TabItem Header="Route">
-                                <Image/>
-                            </TabItem>
-                            <TabItem Header="Description">
-                                <TextBox/>
-                            </TabItem>
-                        </TabControl>
-                    </Grid>
-                    <Grid Grid.Row="2">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        <DockPanel Grid.Row="0" Margin="2">
-                            <Button DockPanel.Dock="Right" Padding="4" Content="Edit"/>
-                            <Button DockPanel.Dock="Right" Padding="4" Content="Delete"/>
-                            <Button DockPanel.Dock="Right" Padding="4" Content="Add"/>
-                            <Label DockPanel.Dock="Left" Content="Logs:"/>
-                        </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedTour.Route.Stops}" AutoGenerateColumns="False">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Name" Binding="{Binding }"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Grid>
-                </Grid>
+                <GroupBox Grid.Column="2" Header="Tour Information" Padding="4">
+                    <local:SingleTourView DataContext="{Binding}"/>
+                </GroupBox>
             </Grid>
         </Grid>
     </DockPanel>
-</Window>
+</actl:AdonisWindow>

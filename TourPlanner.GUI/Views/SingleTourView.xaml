@@ -1,0 +1,108 @@
+﻿<UserControl x:Class="TourPlanner.GUI.Views.SingleTourView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TourPlanner.GUI.Views"
+             xmlns:vm="clr-namespace:TourPlanner.GUI.ViewModels"
+             xmlns:aext="clr-namespace:AdonisUI.Extensions;assembly=AdonisUI"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:DesignMainWindowViewModel, IsDesignTimeCreatable=True}"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.DataContext>
+        <vm:MainWindowViewModel/>
+    </UserControl.DataContext>
+    <Grid>
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <GridSplitter Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" Height="4"/>
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <DockPanel Grid.Row="0">
+                    <Label DockPanel.Dock="Left" Padding="4" Content="Name:"/>
+                    <TextBox Margin="2" Text="{Binding SelectedTour.Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="64"/>
+                </DockPanel>
+                <TabControl Grid.Row="1">
+                    <TabItem Header="General Information">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="2*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="Starting point:" FontWeight="Normal"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="Ending point:" FontWeight="Normal"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="Number of steps:" FontWeight="Normal"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Total distance:" FontWeight="Normal"/>
+
+                            <Label Grid.Row="0" Grid.Column="1" Content="{Binding SelectedTour.Route.StartLocation}" FontWeight="Normal"/>
+                            <Label Grid.Row="1" Grid.Column="1" Content="{Binding SelectedTour.Route.EndLocation}" FontWeight="Normal"/>
+                            <Label Grid.Row="2" Grid.Column="1" Content="{Binding SelectedTour.Route.Steps.Count}" ContentStringFormat="{}{0} step(s)" FontWeight="Normal"/>
+                            <Label Grid.Row="3" Grid.Column="1" Content="{Binding SelectedTour.Route.TotalDistance}" ContentStringFormat="{}{0} km" FontWeight="Normal"/>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Route">
+                        <ScrollViewer aext:ScrollViewerExtension.HideScrollBarsUntilMouseOver="True"
+                                      aext:ScrollViewerExtension.VerticalScrollBarExpansionMode="NeverExpand"
+                                      aext:ScrollViewerExtension.VerticalScrollBarPlacement="Overlay"
+                                      aext:ScrollViewerExtension.HorizontalScrollBarExpansionMode="NeverExpand"
+                                      aext:ScrollViewerExtension.HorizontalScrollBarPlacement="Overlay">
+                            <Image Source="{Binding SelectedTour.ImagePath}" Stretch="UniformToFill"/>
+                        </ScrollViewer>
+                    </TabItem>
+                    <TabItem Header="Description">
+                        <TextBox Text="{Binding SelectedTour.CustomDescription}" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"/>
+                    </TabItem>
+                    <TabItem Header="Steps">
+                        <DataGrid ItemsSource="{Binding SelectedTour.Route.Steps}" AutoGenerateColumns="False" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Distance" Binding="{Binding Distance}" />
+                                <DataGridTextColumn Header="Description" Binding="{Binding Description}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+            <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel Grid.Row="0" Margin="2">
+                    <Button DockPanel.Dock="Right" Padding="4" Content="Delete" Command="{Binding DeleteTourLogCommand}"/>
+                    <Button DockPanel.Dock="Right" Padding="4" Content="Add" Command="{Binding AddTourLogCommand}"/>
+                    <Label DockPanel.Dock="Left" Padding="4" Content="Logs:"/>
+                </DockPanel>
+                <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedTour.Log}" AutoGenerateColumns="False" IsReadOnly="False"
+                          ScrollViewer.CanContentScroll="True"
+                          aext:ScrollViewerExtension.HideScrollBarsUntilMouseOver="True"
+                          aext:ScrollViewerExtension.VerticalScrollBarExpansionMode="NeverExpand"
+                          aext:ScrollViewerExtension.VerticalScrollBarPlacement="Overlay"
+                          aext:ScrollViewerExtension.HorizontalScrollBarExpansionMode="NeverExpand"
+                          aext:ScrollViewerExtension.HorizontalScrollBarPlacement="Overlay">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat='d'}"/>
+                        <DataGridTextColumn Header="Duration" Binding="{Binding Duration}"/>
+                        <DataGridTextColumn Header="Distance" Binding="{Binding Distance}"/>
+                        <DataGridTextColumn Header="Rating" Binding="{Binding Rating, StringFormat='P0'}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
