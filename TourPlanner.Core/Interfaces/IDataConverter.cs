@@ -14,6 +14,11 @@ namespace TourPlanner.Core.Interfaces
         string PreferredFileExtension { get; }
 
         /// <summary>
+        /// Display name of the converter.
+        /// </summary>
+        string DisplayName { get; }
+
+        /// <summary>
         /// Read all tours from <paramref name="inputStream"/>.
         /// </summary>
         /// <param name="inputStream">The input data stream.</param>

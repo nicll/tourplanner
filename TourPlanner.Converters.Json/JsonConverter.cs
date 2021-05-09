@@ -14,6 +14,8 @@ namespace TourPlanner.Converters.Json
 
         public string PreferredFileExtension => "json";
 
+        public string DisplayName => nameof(JsonConverter);
+
         public async Task<ICollection<Tour>> ReadTours(Stream inputStream)
             => await JsonSerializer.DeserializeAsync<ICollection<Tour>>(inputStream, _jsonOpts).ConfigureAwait(false);
 
