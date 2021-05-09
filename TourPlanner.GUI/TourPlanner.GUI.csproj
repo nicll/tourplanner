@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TourPlanner.Converters.Json\TourPlanner.Converters.Json.csproj" />
     <ProjectReference Include="..\TourPlanner.Core\TourPlanner.Core.csproj" />
     <ProjectReference Include="..\TourPlanner.DataProviders.MapQuest\TourPlanner.DataProviders.MapQuest.csproj" />
     <ProjectReference Include="..\TourPlanner.DB.Postgres\TourPlanner.DB.Postgres.csproj" />

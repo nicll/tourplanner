@@ -89,6 +89,10 @@ namespace TourPlanner.GUI.ViewModels
 
         public ICommand DeleteTourLogCommand { get; }
 
+        public ICommand ImportCommand { get; }
+
+        public ICommand ExportCommand { get; }
+
         public ICommand GenerateSummaryReportCommand { get; }
 
         public ICommand GenerateTourReportCommand { get; }
@@ -112,6 +116,8 @@ namespace TourPlanner.GUI.ViewModels
             DeleteTourCommand = new AsyncCommand(DeleteTour);
             AddTourLogCommand = new RelayCommand(AddTourLog);
             DeleteTourLogCommand = new RelayCommand(DeleteTourLog);
+            ImportCommand = new AsyncCommand(ImportData);
+            ExportCommand = new AsyncCommand(ExportData);
             GenerateSummaryReportCommand = new AsyncCommand(GenerateSummaryReport);
             GenerateTourReportCommand = new AsyncCommand(GenerateTourReport);
             ClearSearchTextCommand = new RelayCommand(ClearSearchText);
@@ -230,10 +236,34 @@ namespace TourPlanner.GUI.ViewModels
 
         }
 
+        public async Task ImportData()
+        {
+            var path = Utils.GetOpenFilePath("json", "JSON document (*.json)|*.json");
+
+            if (String.IsNullOrEmpty(path))
+                return;
+
+            _tours.Clear();
+            var tours = await Utils.ImportToursFromFile(path);
+            _tours.AddRange(tours);
+            UpdateShownTours();
+            await _db.SynchronizeTours(_tours);
+        }
+
+        public async Task ExportData()
+        {
+            var path = Utils.GetSaveFilePath(null, "json", "JSON document (*.json)|*.json");
+
+            if (String.IsNullOrEmpty(path))
+                return;
+
+            await Utils.ExportToursFromFile(path, _tours);
+        }
+
         private Task GenerateSummaryReport()
         {
             _log.Debug("Generating summary report.");
-            var savePath = Utils.GetReportSavePath("summary");
+            var savePath = GetReportSavePath("summary");
 
             if (String.IsNullOrEmpty(savePath))
                 return Task.CompletedTask;
@@ -251,7 +281,7 @@ namespace TourPlanner.GUI.ViewModels
                 return Task.CompletedTask;
 
             _log.Debug("Generating tour report for tour \"" + selectedTour.TourId + "\".");
-            var savePath = Utils.GetReportSavePath(selectedTour.Name);
+            var savePath = GetReportSavePath(selectedTour.Name);
 
             if (String.IsNullOrEmpty(savePath))
                 return Task.CompletedTask;
@@ -262,6 +292,9 @@ namespace TourPlanner.GUI.ViewModels
             _log.Info("Generated tour report \"" + savePath + "\" for tour \"" + selectedTour.TourId + "\".");
             return Task.CompletedTask;
         }
+
+        private static string GetReportSavePath(string suggestedName)
+            => Utils.GetSaveFilePath(suggestedName, "pdf", "Portable document files (*.pdf)|*.pdf");
 
         private void ClearSearchText()
             => SearchText = String.Empty;

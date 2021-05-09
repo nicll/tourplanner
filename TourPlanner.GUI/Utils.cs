@@ -5,12 +5,18 @@ using System.Diagnostics;
 using TourPlanner.Core.Configuration;
 using TourPlanner.Core.Models;
 using log4net;
+using TourPlanner.Converters.Json;
+using System.Threading.Tasks;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace TourPlanner.GUI
 {
     internal static class Utils
     {
         private static readonly ILog _log = LogManager.GetLogger(typeof(Utils));
+        private static readonly JsonConverter _jsonConverter = new();
 
         public static Configuration LoadConfig(string configFilePath)
         {
@@ -31,15 +37,15 @@ namespace TourPlanner.GUI
             };
         }
 
-        public static string GetReportSavePath(string suggestedName)
+        public static string GetSaveFilePath(string suggestedName, string extension, string filter)
         {
             var saveFileDlg = new SaveFileDialog
             {
                 AddExtension = true,
                 CheckPathExists = true,
-                DefaultExt = "pdf",
+                DefaultExt = extension,
                 FileName = suggestedName,
-                Filter = "Portable document files (*.pdf)|*.pdf",
+                Filter = filter,
                 OverwritePrompt = true,
                 ValidateNames = true
             };
@@ -48,6 +54,35 @@ namespace TourPlanner.GUI
                 return saveFileDlg.FileName;
 
             return String.Empty;
+        }
+
+        public static string GetOpenFilePath(string extension, string filter)
+        {
+            var saveFileDlg = new OpenFileDialog
+            {
+                AddExtension = true,
+                CheckPathExists = true,
+                DefaultExt = extension,
+                Filter = filter,
+                ValidateNames = true
+            };
+
+            if (saveFileDlg.ShowDialog() is true)
+                return saveFileDlg.FileName;
+
+            return String.Empty;
+        }
+
+        public static async Task<Tour[]> ImportToursFromFile(string path)
+        {
+            using var file = File.OpenRead(path);
+            return (await _jsonConverter.ReadTours(file)).ToArray();
+        }
+
+        public static async Task ExportToursFromFile(string path, List<Tour> tours)
+        {
+            using var file = File.OpenWrite(path);
+            await _jsonConverter.WriteTours(file, tours);
         }
 
         public static void ShowFile(string filePath)

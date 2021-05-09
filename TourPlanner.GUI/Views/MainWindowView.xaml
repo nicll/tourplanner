@@ -42,8 +42,8 @@
                 </MenuItem>
             </MenuItem>
             <MenuItem Header="_Data Migration">
-                <MenuItem Header="_Import"/>
-                <MenuItem Header="_Export"/>
+                <MenuItem Header="_Import" Command="{Binding ImportCommand}"/>
+                <MenuItem Header="_Export" Command="{Binding ExportCommand}"/>
             </MenuItem>
             <MenuItem Header="_Reports">
                 <MenuItem Header="_Summary Report" Command="{Binding GenerateSummaryReportCommand}"/>
