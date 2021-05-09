@@ -4,6 +4,9 @@ using TourPlanner.Core.Models;
 
 namespace TourPlanner.Core.Interfaces
 {
+    /// <summary>
+    /// An interface for querying visual representations for routes.
+    /// </summary>
     public interface IMapImageProvider
     {
         /// <summary>
