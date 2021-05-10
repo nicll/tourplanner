@@ -6,6 +6,9 @@ using TourPlanner.Core.Models;
 
 namespace TourPlanner.Core.Interfaces
 {
+    /// <summary>
+    /// An interface for importing and exporting the current tour data.
+    /// </summary>
     public interface IDataConverter
     {
         /// <summary>
