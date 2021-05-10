@@ -1,22 +1,29 @@
 ﻿using QuestPDF.Fluent;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 
 namespace TourPlanner.Reporting.PDF
 {
-    public static class ReportGenerator
+    public class ReportGenerator : IReportGenerator
     {
-        public static void GenerateTourReport(Tour tour, string savePath)
+        public Task GenerateTourReport(Tour tour, string savePath)
         {
             var document = new TourReportDocument(tour);
-            document.GeneratePdf(savePath);
+            using var fileStream = File.Create(savePath);
+            document.GeneratePdf(fileStream);
+            return Task.CompletedTask;
         }
 
-        public static void GenerateSummaryReport(ICollection<Tour> tours, string savePath)
+        public Task GenerateSummaryReport(ICollection<Tour> tours, string savePath)
         {
             var document = new SummaryReport(tours);
-            document.GeneratePdf(savePath);
+            using var fileStream = File.Create(savePath);
+            document.GeneratePdf(fileStream);
+            return Task.CompletedTask;
         }
     }
 }

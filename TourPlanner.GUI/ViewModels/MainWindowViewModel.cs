@@ -11,6 +11,7 @@ using TourPlanner.Core.Models;
 using TourPlanner.DataProviders.MapQuest;
 using TourPlanner.Reporting.PDF;
 using log4net;
+using TourPlanner.DB.Postgres;
 
 namespace TourPlanner.GUI.ViewModels
 {
@@ -25,6 +26,7 @@ namespace TourPlanner.GUI.ViewModels
         private IDirectionsProvider _dir;
         private IMapImageProvider _img;
         private readonly IDatabaseClient _db;
+        private readonly IReportGenerator _report;
         private readonly ILog _log;
 
         public bool IsDarkMode
@@ -103,6 +105,8 @@ namespace TourPlanner.GUI.ViewModels
         {
             _log = LogManager.GetLogger(typeof(MainWindowViewModel));
             _config = Utils.LoadConfig("connection.config");
+            _db = new PostgresDatabase();
+            _report = new ReportGenerator();
             _mapFactory = new();
             Task.Run(async () => _dir = await _mapFactory.CreateDirectionsProvider(_config.DirectionsApiConfig));
             Task.Run(async () => _img = await _mapFactory.CreateMapImageProvider(_config.MapImageApiConfig));
@@ -260,37 +264,35 @@ namespace TourPlanner.GUI.ViewModels
             await Utils.ExportToursFromFile(path, _tours);
         }
 
-        private Task GenerateSummaryReport()
+        private async Task GenerateSummaryReport()
         {
             _log.Debug("Generating summary report.");
             var savePath = GetReportSavePath("summary");
 
             if (String.IsNullOrEmpty(savePath))
-                return Task.CompletedTask;
+                return;
 
             _log.Debug("User selected \"" + savePath + "\" for summary report.");
-            ReportGenerator.GenerateSummaryReport(_tours, savePath);
+            await _report.GenerateSummaryReport(_tours, savePath);
             Utils.ShowFile(savePath);
             _log.Info("Generated summary report: " + savePath);
-            return Task.CompletedTask;
         }
 
-        private Task GenerateTourReport()
+        private async Task GenerateTourReport()
         {
             if (SelectedTour is not Tour selectedTour)
-                return Task.CompletedTask;
+                return;
 
             _log.Debug("Generating tour report for tour \"" + selectedTour.TourId + "\".");
             var savePath = GetReportSavePath(selectedTour.Name);
 
             if (String.IsNullOrEmpty(savePath))
-                return Task.CompletedTask;
+                return;
 
             _log.Debug("User selected \"" + savePath + "\" for tour report for tour \"" + selectedTour.TourId + "\".");
-            ReportGenerator.GenerateTourReport(selectedTour, savePath);
+            await _report.GenerateTourReport(selectedTour, savePath);
             Utils.ShowFile(savePath);
             _log.Info("Generated tour report \"" + savePath + "\" for tour \"" + selectedTour.TourId + "\".");
-            return Task.CompletedTask;
         }
 
         private static string GetReportSavePath(string suggestedName)
