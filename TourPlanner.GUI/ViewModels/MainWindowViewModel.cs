@@ -104,7 +104,7 @@ namespace TourPlanner.GUI.ViewModels
         public MainWindowViewModel()
         {
             _log = LogManager.GetLogger(typeof(MainWindowViewModel));
-            _config = Utils.LoadConfig("connection.config");
+            _config = OSInteraction.LoadConfig("connection.config");
             _db = new PostgresDatabase();
             _report = new ReportGenerator();
             _mapFactory = new();
@@ -242,13 +242,13 @@ namespace TourPlanner.GUI.ViewModels
 
         public async Task ImportData()
         {
-            var path = Utils.GetOpenFilePath("json", "JSON document (*.json)|*.json");
+            var path = OSInteraction.GetOpenFilePath("json", "JSON document (*.json)|*.json");
 
             if (String.IsNullOrEmpty(path))
                 return;
 
             _tours.Clear();
-            var tours = await Utils.ImportToursFromFile(path);
+            var tours = await OSInteraction.ImportToursFromFile(path);
             _tours.AddRange(tours);
             UpdateShownTours();
             await _db.SynchronizeTours(_tours);
@@ -256,12 +256,12 @@ namespace TourPlanner.GUI.ViewModels
 
         public async Task ExportData()
         {
-            var path = Utils.GetSaveFilePath(null, "json", "JSON document (*.json)|*.json");
+            var path = OSInteraction.GetSaveFilePath(null, "json", "JSON document (*.json)|*.json");
 
             if (String.IsNullOrEmpty(path))
                 return;
 
-            await Utils.ExportToursFromFile(path, _tours);
+            await OSInteraction.ExportToursFromFile(path, _tours);
         }
 
         private async Task GenerateSummaryReport()
@@ -274,7 +274,7 @@ namespace TourPlanner.GUI.ViewModels
 
             _log.Debug("User selected \"" + savePath + "\" for summary report.");
             await _report.GenerateSummaryReport(_tours, savePath);
-            Utils.ShowFile(savePath);
+            OSInteraction.ShowFile(savePath);
             _log.Info("Generated summary report: " + savePath);
         }
 
@@ -291,12 +291,12 @@ namespace TourPlanner.GUI.ViewModels
 
             _log.Debug("User selected \"" + savePath + "\" for tour report for tour \"" + selectedTour.TourId + "\".");
             await _report.GenerateTourReport(selectedTour, savePath);
-            Utils.ShowFile(savePath);
+            OSInteraction.ShowFile(savePath);
             _log.Info("Generated tour report \"" + savePath + "\" for tour \"" + selectedTour.TourId + "\".");
         }
 
         private static string GetReportSavePath(string suggestedName)
-            => Utils.GetSaveFilePath(suggestedName, "pdf", "Portable document files (*.pdf)|*.pdf");
+            => OSInteraction.GetSaveFilePath(suggestedName, "pdf", "Portable document files (*.pdf)|*.pdf");
 
         private void ClearSearchText()
             => SearchText = String.Empty;

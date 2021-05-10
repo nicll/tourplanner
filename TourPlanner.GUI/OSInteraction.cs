@@ -13,9 +13,9 @@ using System.Collections.Generic;
 
 namespace TourPlanner.GUI
 {
-    internal static class Utils
+    internal static class OSInteraction
     {
-        private static readonly ILog _log = LogManager.GetLogger(typeof(Utils));
+        private static readonly ILog _log = LogManager.GetLogger(typeof(OSInteraction));
         private static readonly JsonConverter _jsonConverter = new();
 
         public static Configuration LoadConfig(string configFilePath)
