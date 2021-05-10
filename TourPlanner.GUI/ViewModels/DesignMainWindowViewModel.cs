@@ -4,7 +4,7 @@ using TourPlanner.Core.Models;
 
 namespace TourPlanner.GUI.ViewModels
 {
-    public class DesignMainWindowViewModel : MainWindowViewModel
+    public class DesignMainWindowViewModel : MainWindowViewModelInit
     {
         public DesignMainWindowViewModel()
         {

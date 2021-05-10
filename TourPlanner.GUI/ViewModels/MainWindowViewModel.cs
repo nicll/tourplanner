@@ -8,21 +8,18 @@ using System.Windows.Input;
 using TourPlanner.Core.Configuration;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
-using TourPlanner.DataProviders.MapQuest;
-using TourPlanner.Reporting.PDF;
 using log4net;
-using TourPlanner.DB.Postgres;
 
 namespace TourPlanner.GUI.ViewModels
 {
-    public class MainWindowViewModel : ViewModelBase
+    public abstract class MainWindowViewModel : ViewModelBase
     {
         private bool _darkMode = false, _searchBarVisible = false, _includeDescChecked = false;
         private string _searchText = String.Empty;
         private readonly List<Tour> _tours;
         private readonly Configuration _config;
         private Tour _selectedTour;
-        private readonly MapQuestApiFactory _mapFactory;
+        private readonly IDataProviderFactory _dpFactory;
         private IDirectionsProvider _dir;
         private IMapImageProvider _img;
         private readonly IDatabaseClient _db;
@@ -101,15 +98,15 @@ namespace TourPlanner.GUI.ViewModels
 
         public ICommand ClearSearchTextCommand { get; }
 
-        public MainWindowViewModel()
+        protected MainWindowViewModel(string configFile, IDatabaseClient database, IReportGenerator reportGenerator, IDataProviderFactory dataProvider)
         {
             _log = LogManager.GetLogger(typeof(MainWindowViewModel));
-            _config = OSInteraction.LoadConfig("connection.config");
-            _db = new PostgresDatabase();
-            _report = new ReportGenerator();
-            _mapFactory = new();
-            Task.Run(async () => _dir = await _mapFactory.CreateDirectionsProvider(_config.DirectionsApiConfig));
-            Task.Run(async () => _img = await _mapFactory.CreateMapImageProvider(_config.MapImageApiConfig));
+            _config = OSInteraction.LoadConfig(configFile);
+            _db = database;
+            _report = reportGenerator;
+            _dpFactory = dataProvider;
+            Task.Run(async () => _dir = await _dpFactory.CreateDirectionsProvider(_config.DirectionsApiConfig));
+            Task.Run(async () => _img = await _dpFactory.CreateMapImageProvider(_config.MapImageApiConfig));
             _tours = new();
 
             ResetConnectionCommand = new RelayCommand(ResetConnection);
@@ -134,7 +131,7 @@ namespace TourPlanner.GUI.ViewModels
         }
 
         private void ResetConnection()
-            => _mapFactory.ResetConnection();
+            => _dpFactory.ResetConnection();
 
         private void SwitchTheme()
         {
