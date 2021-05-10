@@ -8,24 +8,29 @@ namespace TourPlanner.DB.Postgres
 {
     public class PostgresDatabase : IDatabaseClient
     {
-        public Task<ICollection<Tour>> QueryTours()
+        public async Task<ICollection<Tour>> QueryTours()
         {
-            throw new NotImplementedException();
+            return Array.Empty<Tour>();
         }
 
-        public Task AddTour(Tour tour)
+        public async Task AddTour(Tour tour)
         {
-            throw new NotImplementedException();
+
         }
 
-        public Task UpdateTour(Tour tour)
+        public async Task UpdateTour(Tour tour)
         {
-            throw new NotImplementedException();
+
         }
 
-        public Task RemoveTour(Tour tour)
+        public async Task RemoveTour(Tour tour)
         {
-            throw new NotImplementedException();
+
+        }
+
+        public async Task SynchronizeTours(ICollection<Tour> tours)
+        {
+
         }
     }
 }

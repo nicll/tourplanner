@@ -14,5 +14,7 @@ namespace TourPlanner.Core.Interfaces
         Task UpdateTour(Tour tour);
 
         Task RemoveTour(Tour tour);
+
+        Task SynchronizeTours(ICollection<Tour> tours);
     }
 }
