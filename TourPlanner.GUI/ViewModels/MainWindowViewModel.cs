@@ -15,13 +15,8 @@ namespace TourPlanner.GUI.ViewModels
     {
         private bool _darkMode = false, _busy = false, _searchBarVisible = false, _includeDescChecked = false;
         private string _searchText = String.Empty;
-        private readonly List<Tour> _tours;
         private Tour _selectedTour;
-        private readonly IDataProviderFactory _dpFactory;
-        private IDirectionsProvider _dir;
-        private IMapImageProvider _img;
-        private readonly IDatabaseClient _db;
-        private readonly IReportGenerator _report;
+        private IDataManager _dm;
         private readonly ILog _log;
 
         public bool IsDarkMode
@@ -39,11 +34,7 @@ namespace TourPlanner.GUI.ViewModels
         public bool IsSearchBarVisible
         {
             get => _searchBarVisible;
-            set
-            {
-                SetProperty(ref _searchBarVisible, value);
-                OnPropertyChanged(nameof(SearchBarVisibility));
-            }
+            set => SetProperty(ref _searchBarVisible, value);
         }
 
         public bool IsIncludeDescriptionChecked
@@ -102,16 +93,10 @@ namespace TourPlanner.GUI.ViewModels
 
         public ICommand ClearSearchTextCommand { get; }
 
-        protected MainWindowViewModel(string configFile, IDatabaseClient database, IReportGenerator reportGenerator, IDataProviderFactory dataProvider)
+        protected MainWindowViewModel()
         {
+            IsBusy = true;
             _log = LogManager.GetLogger(typeof(MainWindowViewModel));
-            _db = database;
-            _report = reportGenerator;
-            _dpFactory = dataProvider;
-            Task.Run(async () => _dir = await _dpFactory.CreateDirectionsProvider(_config.DirectionsApiConfig));
-            Task.Run(async () => _img = await _dpFactory.CreateMapImageProvider(_config.MapImageApiConfig));
-            _tours = new();
-
             ResetConnectionCommand = new RelayCommand(ResetConnection);
             SwitchThemeCommand = new RelayCommand(SwitchTheme);
             SwitchSearchBarVisibilityCommand = new RelayCommand(SwitchSearchBarVisibility);
@@ -128,14 +113,31 @@ namespace TourPlanner.GUI.ViewModels
             ClearSearchTextCommand = new RelayCommand(ClearSearchText);
         }
 
+        protected void FinishInitialization(IDataManager dataManager)
+        {
+            if (_dm is not null)
+                throw new InvalidOperationException("Data manager has already been set.");
+
+            _dm = dataManager;
+            IsBusy = false;
+        }
+
         protected void UpdateLoadedTours(IList<Tour> tours)
         {
-            _tours.Clear();
-            _tours.AddRange(tours);
+            _dm.AllTours.Clear();
+
+            if (_dm.AllTours is List<Tour> allTours)
+            {
+                allTours.AddRange(tours);
+                return;
+            }
+
+            foreach (var tour in tours)
+                _dm.AllTours.Add(tour);
         }
 
         private void ResetConnection()
-            => _dpFactory.ResetConnection();
+            => _dm.Reinitialize();
 
         private void SwitchTheme()
         {
@@ -155,12 +157,8 @@ namespace TourPlanner.GUI.ViewModels
 
         private async Task AddTour()
         {
-            if (_dir is null || _img is null)
-            {
-                _log.Error("Tried adding tour when application was not yet initialized.");
-                MessageBox.Show("The application is currently not fully initialized.", "Please wait", MessageBoxButton.OK, MessageBoxImage.Information);
+            if (IsBusy)
                 return;
-            }
 
             var window = new Views.AddTourView();
             var tourVM = new AddTourViewModel(window)
@@ -172,37 +170,40 @@ namespace TourPlanner.GUI.ViewModels
             if (window.ShowDialog() is not true) // false or null
                 return;
 
-            var route = await _dir.GetRoute(tourVM.StartLocation, tourVM.EndLocation);
-
-            if (route is null) // not found
+            await BusySection(async () =>
             {
-                _log.Error("No possible route was found for the given inputs.");
-                MessageBox.Show("No possible route could be found.", "Cannot add tour", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+                var route = await _dm.CurrentDirectionsProvider.GetRoute(tourVM.StartLocation, tourVM.EndLocation);
 
-            var imagePath = await _img.GetImage(route);
+                if (route is null) // not found
+                {
+                    _log.Error("No possible route was found for the given inputs.");
+                    MessageBox.Show("No possible route could be found.", "Cannot add tour", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
 
-            if (imagePath is null)
-            {
-                _log.Warn("No image was found for the given route.");
-                MessageBox.Show("No image for the route could be loaded.", "Cannot load tour image", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+                var imagePath = await _dm.CurrentMapImageProvider.GetImage(route);
 
-            var newTour = new Tour
-            {
-                TourId = Guid.NewGuid(),
-                Name = tourVM.Name,
-                CustomDescription = String.Empty,
-                ImagePath = imagePath,
-                Route = route,
-                Log = new List<LogEntry>()
-            };
+                if (imagePath is null)
+                {
+                    _log.Warn("No image was found for the given route.");
+                    MessageBox.Show("No image for the route could be loaded.", "Cannot load tour image", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
 
-            _log.Info("Adding new tour with TourId=\"" + newTour.TourId + "\".");
-            await _db.AddTour(newTour);
-            _tours.Add(newTour);
-            UpdateShownTours();
+                var newTour = new Tour
+                {
+                    TourId = Guid.NewGuid(),
+                    Name = tourVM.Name,
+                    CustomDescription = String.Empty,
+                    ImagePath = imagePath,
+                    Route = route,
+                    Log = new List<LogEntry>()
+                };
+
+                _log.Info("Adding new tour with TourId=\"" + newTour.TourId + "\".");
+                _dm.AllTours.Add(newTour);
+                await _dm.SynchronizeTours();
+                UpdateShownTours();
+            });
 
             void Cancel()
             {
@@ -219,68 +220,98 @@ namespace TourPlanner.GUI.ViewModels
 
         private async Task DeleteTour()
         {
+            if (IsBusy)
+                return;
+
             var selectedTour = SelectedTour;
 
             if (selectedTour is null)
                 return;
 
-            _log.Info("Deleting tour with TourId=\"" + selectedTour.TourId + "\".");
-            SelectedTour = null;
-            _tours.Remove(selectedTour);
-            ShownTours.Remove(selectedTour);
-            await _db.RemoveTour(selectedTour);
+            await BusySection(async () =>
+            {
+                _log.Info("Deleting tour with TourId=\"" + selectedTour.TourId + "\".");
+                SelectedTour = null;
+                _dm.AllTours.Remove(selectedTour);
+                ShownTours.Remove(selectedTour);
+                await _dm.SynchronizeTours();
+            });
         }
 
         private void AddTourLog()
         {
-
+            if (IsBusy)
+                return;
         }
 
         private void DeleteTourLog()
         {
-
+            if (IsBusy)
+                return;
         }
 
         public async Task ImportData()
         {
+            if (IsBusy)
+                return;
+
             var path = OSInteraction.GetOpenFilePath("json", "JSON document (*.json)|*.json");
 
             if (String.IsNullOrEmpty(path))
                 return;
 
-            _tours.Clear();
-            var tours = await OSInteraction.ImportToursFromFile(path);
-            _tours.AddRange(tours);
-            UpdateShownTours();
-            await _db.SynchronizeTours(_tours);
+            await BusySection(async () =>
+            {
+                _log.Info("Importing data from file \"" + path + "\".");
+                var tours = await OSInteraction.ImportToursFromFile(path);
+                UpdateLoadedTours(tours);
+                UpdateShownTours();
+                await _dm.SynchronizeTours();
+            });
         }
 
         public async Task ExportData()
         {
+            if (IsBusy)
+                return;
+
             var path = OSInteraction.GetSaveFilePath(null, "json", "JSON document (*.json)|*.json");
 
             if (String.IsNullOrEmpty(path))
                 return;
 
-            await OSInteraction.ExportToursFromFile(path, _tours);
+            await BusySection(async () =>
+            {
+                _log.Info("Exporting data to file \"" + path + "\".");
+                await OSInteraction.ExportToursToFile(path, _dm.AllTours);
+            });
         }
 
         private async Task GenerateSummaryReport()
         {
+            if (IsBusy)
+                return;
+
             _log.Debug("Generating summary report.");
             var savePath = GetReportSavePath("summary");
 
             if (String.IsNullOrEmpty(savePath))
                 return;
 
-            _log.Debug("User selected \"" + savePath + "\" for summary report.");
-            await _report.GenerateSummaryReport(_tours, savePath);
-            OSInteraction.ShowFile(savePath);
-            _log.Info("Generated summary report: " + savePath);
+            await BusySection(async () =>
+            {
+                _log.Debug("User selected \"" + savePath + "\" for summary report.");
+                await _dm.ReportGenerator.GenerateSummaryReport(_dm.AllTours, savePath);
+                OSInteraction.ShowFile(savePath);
+                _log.Info("Generated summary report: " + savePath);
+            });
         }
 
         private async Task GenerateTourReport()
         {
+            if (IsBusy)
+                return;
+
             if (SelectedTour is not Tour selectedTour)
                 return;
 
@@ -290,10 +321,13 @@ namespace TourPlanner.GUI.ViewModels
             if (String.IsNullOrEmpty(savePath))
                 return;
 
-            _log.Debug("User selected \"" + savePath + "\" for tour report for tour \"" + selectedTour.TourId + "\".");
-            await _report.GenerateTourReport(selectedTour, savePath);
-            OSInteraction.ShowFile(savePath);
-            _log.Info("Generated tour report \"" + savePath + "\" for tour \"" + selectedTour.TourId + "\".");
+            await BusySection(async () =>
+            {
+                _log.Debug("User selected \"" + savePath + "\" for tour report for tour \"" + selectedTour.TourId + "\".");
+                await _dm.ReportGenerator.GenerateTourReport(selectedTour, savePath);
+                OSInteraction.ShowFile(savePath);
+                _log.Info("Generated tour report \"" + savePath + "\" for tour \"" + selectedTour.TourId + "\".");
+            });
         }
 
         private async Task Delay()
@@ -310,7 +344,7 @@ namespace TourPlanner.GUI.ViewModels
             Func<Tour, bool> isContained = IsIncludeDescriptionChecked ? IsInNameOrDesc : IsInName;
             ShownTours.Clear();
 
-            foreach (var tour in _tours)
+            foreach (var tour in _dm.AllTours)
             {
                 if (isContained(tour))
                     ShownTours.Add(tour);
@@ -318,6 +352,13 @@ namespace TourPlanner.GUI.ViewModels
 
             bool IsInName(Tour tour) => tour.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
             bool IsInNameOrDesc(Tour tour) => IsInName(tour) || tour.CustomDescription.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private async Task BusySection(Func<Task> section)
+        {
+            IsBusy = true;
+            await section();
+            IsBusy = false;
         }
     }
 }

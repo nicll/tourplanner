@@ -79,7 +79,7 @@ namespace TourPlanner.GUI
             return (await _jsonConverter.ReadTours(file)).ToArray();
         }
 
-        public static async Task ExportToursFromFile(string path, List<Tour> tours)
+        public static async Task ExportToursToFile(string path, ICollection<Tour> tours)
         {
             using var file = File.OpenWrite(path);
             await _jsonConverter.WriteTours(file, tours);
