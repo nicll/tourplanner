@@ -26,75 +26,80 @@
         <KeyBinding Gesture="F11" Command="{Binding SwitchSearchBarVisibilityCommand}"/>
         <KeyBinding Gesture="F12" Command="{Binding SwitchThemeCommand}"/>
     </Window.InputBindings>
-    <DockPanel>
-        <Menu DockPanel.Dock="Top" Grid.Row="0">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Reconnect API" Command="{Binding ResetConnectionCommand}"/>
-                <MenuItem Header="_Show Search Bar" InputGestureText="F11" Command="{Binding SwitchSearchBarVisibilityCommand}" IsChecked="{Binding IsSearchBarVisible}"/>
-                <MenuItem Header="_Dark Theme" InputGestureText="F12" Command="{Binding SwitchThemeCommand}" IsChecked="{Binding IsDarkMode}"/>
-                <MenuItem Header="_Exit" InputGestureText="Ctrl+Q" Command="{Binding ExitApplicationCommand}"/>
-            </MenuItem>
-            <MenuItem Header="_Edit">
-                <MenuItem Header="_Tour">
-                    <MenuItem Header="_Add Tour" Command="{Binding AddTourCommand}"/>
-                    <MenuItem Header="_Delete Tour" Command="{Binding DeleteTourCommand}"/>
+    <Grid>
+        <Border Panel.ZIndex="1" Opacity="0.75" Background="{DynamicResource {x:Static aui:Brushes.Layer0BackgroundBrush}}" Visibility="{Binding IsBusy, Converter={StaticResource boolConverter}}"/>
+        <ContentControl Panel.ZIndex="1" ContentTemplate="{DynamicResource {x:Static aui:Templates.LoadingDots}}" Foreground="{DynamicResource {x:Static aui:Brushes.ForegroundBrush}}"
+                        Width="40" Visibility="{Binding IsBusy, Converter={StaticResource boolConverter}}"/>
+        <DockPanel>
+            <Menu DockPanel.Dock="Top" Grid.Row="0">
+                <MenuItem Header="_File">
+                    <MenuItem Header="_Reconnect API" Command="{Binding ResetConnectionCommand}"/>
+                    <MenuItem Header="_Show Search Bar" InputGestureText="F11" Command="{Binding SwitchSearchBarVisibilityCommand}" IsChecked="{Binding IsSearchBarVisible}"/>
+                    <MenuItem Header="_Dark Theme" InputGestureText="F12" Command="{Binding SwitchThemeCommand}" IsChecked="{Binding IsDarkMode}"/>
+                    <MenuItem Header="_Exit" InputGestureText="Ctrl+Q" Command="{Binding ExitApplicationCommand}"/>
                 </MenuItem>
-                <MenuItem Header="Tour _Logs">
-                    <MenuItem Header="_Add Tour Log Entry" Command="{Binding AddTourLogCommand}"/>
-                    <MenuItem Header="_Delete Tour Log Entry" Command="{Binding DeleteTourLogCommand}"/>
+                <MenuItem Header="_Edit">
+                    <MenuItem Header="_Tour">
+                        <MenuItem Header="_Add Tour" Command="{Binding AddTourCommand}"/>
+                        <MenuItem Header="_Delete Tour" Command="{Binding DeleteTourCommand}"/>
+                    </MenuItem>
+                    <MenuItem Header="Tour _Logs">
+                        <MenuItem Header="_Add Tour Log Entry" Command="{Binding AddTourLogCommand}"/>
+                        <MenuItem Header="_Delete Tour Log Entry" Command="{Binding DeleteTourLogCommand}"/>
+                    </MenuItem>
                 </MenuItem>
-            </MenuItem>
-            <MenuItem Header="_Data Migration">
-                <MenuItem Header="_Import" Command="{Binding ImportCommand}"/>
-                <MenuItem Header="_Export" Command="{Binding ExportCommand}"/>
-            </MenuItem>
-            <MenuItem Header="_Reports">
-                <MenuItem Header="_Summary Report" Command="{Binding GenerateSummaryReportCommand}"/>
-                <MenuItem Header="_Tour Report" Command="{Binding GenerateTourReportCommand}"/>
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="About"/>
-            </MenuItem>
-        </Menu>
-        <Grid Grid.Row="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+                <MenuItem Header="_Data Migration">
+                    <MenuItem Header="_Import" Command="{Binding ImportCommand}"/>
+                    <MenuItem Header="_Export" Command="{Binding ExportCommand}"/>
+                </MenuItem>
+                <MenuItem Header="_Reports">
+                    <MenuItem Header="_Summary Report" Command="{Binding GenerateSummaryReportCommand}"/>
+                    <MenuItem Header="_Tour Report" Command="{Binding GenerateTourReportCommand}"/>
+                </MenuItem>
+                <MenuItem Header="_Help">
+                    <MenuItem Header="About"/>
+                    <MenuItem Header="Delay" Command="{Binding DelayCommand}"/>
+                </MenuItem>
+            </Menu>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-            <DockPanel Grid.Row="1" Visibility="{Binding SearchBarVisibility}">
-                <CheckBox DockPanel.Dock="Right" Content="Include Description" IsChecked="{Binding IsIncludeDescriptionChecked}" Margin="4"/>
-                <Button DockPanel.Dock="Right" Content="Clear" Command="{Binding ClearSearchTextCommand}"/>
-                <TextBox DockPanel.Dock="Left" MaxLength="64" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-            </DockPanel>
-            <Grid Grid.Row="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="3*"/>
-                </Grid.ColumnDefinitions>
+                <DockPanel Grid.Row="1" Visibility="{Binding IsSearchBarVisible, Converter={StaticResource boolConverter}}">
+                    <CheckBox DockPanel.Dock="Right" Content="Include Description" IsChecked="{Binding IsIncludeDescriptionChecked}" Margin="4"/>
+                    <Button DockPanel.Dock="Right" Content="Clear" Command="{Binding ClearSearchTextCommand}"/>
+                    <TextBox DockPanel.Dock="Left" MaxLength="64" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                </DockPanel>
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="3*"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- FixMe: GridSplitter may put elements outside the window -->
-                <GridSplitter Grid.Column="1"  VerticalAlignment="Stretch" HorizontalAlignment="Center" ResizeBehavior="PreviousAndNext" Width="4" Background="{DynamicResource {x:Static aui:Brushes.Layer1BorderBrush}}"/>
+                    <!-- FixMe: GridSplitter may put elements outside the window -->
+                    <GridSplitter Grid.Column="1"  VerticalAlignment="Stretch" HorizontalAlignment="Center" ResizeBehavior="PreviousAndNext" Width="4" Background="{DynamicResource {x:Static aui:Brushes.Layer1BorderBrush}}"/>
 
-                <GroupBox Grid.Column="0" Header="Tours" FontWeight="Normal" FontStyle="Normal" Padding="4">
-                    <ListBox ItemsSource="{Binding ShownTours}" SelectedItem="{Binding Path=SelectedTour, Mode=TwoWay}"
+                    <GroupBox Grid.Column="0" Header="Tours" FontWeight="Normal" FontStyle="Normal" Padding="4">
+                        <ListBox ItemsSource="{Binding ShownTours}" SelectedItem="{Binding Path=SelectedTour, Mode=TwoWay}"
                              aext:ScrollViewerExtension.HideScrollBarsUntilMouseOver="True"
                              aext:ScrollViewerExtension.VerticalScrollBarExpansionMode="NeverExpand"
                              aext:ScrollViewerExtension.VerticalScrollBarPlacement="Overlay"
                              aext:ScrollViewerExtension.HorizontalScrollBarExpansionMode="NeverExpand"
                              aext:ScrollViewerExtension.HorizontalScrollBarPlacement="Docked">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Name}"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </GroupBox>
-                <!--
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </GroupBox>
+                    <!--
                 <Grid Grid.Column="0" Background="{DynamicResource {x:Static aui:Brushes.Layer1BackgroundBrush}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -103,10 +108,11 @@
                     <Label Grid.Row="0" Padding="4" Content="Tours"/>
                 </Grid>-->
 
-                <GroupBox Grid.Column="2" Header="Tour Information" Padding="4">
-                    <local:SingleTourView DataContext="{Binding}"/>
-                </GroupBox>
+                    <GroupBox Grid.Column="2" Header="Tour Information" Padding="4">
+                        <local:SingleTourView DataContext="{Binding}"/>
+                    </GroupBox>
+                </Grid>
             </Grid>
-        </Grid>
-    </DockPanel>
+        </DockPanel>
+    </Grid>
 </actl:AdonisWindow>

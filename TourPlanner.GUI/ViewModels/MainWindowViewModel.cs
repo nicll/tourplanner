@@ -14,7 +14,7 @@ namespace TourPlanner.GUI.ViewModels
 {
     public abstract class MainWindowViewModel : ViewModelBase
     {
-        private bool _darkMode = false, _searchBarVisible = false, _includeDescChecked = false;
+        private bool _darkMode = false, _busy = false, _searchBarVisible = false, _includeDescChecked = false;
         private string _searchText = String.Empty;
         private readonly List<Tour> _tours;
         private readonly Configuration _config;
@@ -32,6 +32,12 @@ namespace TourPlanner.GUI.ViewModels
             set => SetProperty(ref _darkMode, value);
         }
 
+        public bool IsBusy
+        {
+            get => _busy;
+            private set => SetProperty(ref _busy, value);
+        }
+
         public bool IsSearchBarVisible
         {
             get => _searchBarVisible;
@@ -41,8 +47,6 @@ namespace TourPlanner.GUI.ViewModels
                 OnPropertyChanged(nameof(SearchBarVisibility));
             }
         }
-
-        public Visibility SearchBarVisibility => IsSearchBarVisible ? Visibility.Visible : Visibility.Collapsed;
 
         public bool IsIncludeDescriptionChecked
         {
@@ -96,6 +100,8 @@ namespace TourPlanner.GUI.ViewModels
 
         public ICommand GenerateTourReportCommand { get; }
 
+        public ICommand DelayCommand { get; }
+
         public ICommand ClearSearchTextCommand { get; }
 
         protected MainWindowViewModel(string configFile, IDatabaseClient database, IReportGenerator reportGenerator, IDataProviderFactory dataProvider)
@@ -121,6 +127,7 @@ namespace TourPlanner.GUI.ViewModels
             ExportCommand = new AsyncCommand(ExportData);
             GenerateSummaryReportCommand = new AsyncCommand(GenerateSummaryReport);
             GenerateTourReportCommand = new AsyncCommand(GenerateTourReport);
+            DelayCommand = new AsyncCommand(Delay);
             ClearSearchTextCommand = new RelayCommand(ClearSearchText);
         }
 
@@ -291,6 +298,9 @@ namespace TourPlanner.GUI.ViewModels
             OSInteraction.ShowFile(savePath);
             _log.Info("Generated tour report \"" + savePath + "\" for tour \"" + selectedTour.TourId + "\".");
         }
+
+        private async Task Delay()
+            => await BusySection(async () => await Task.Delay(5000)); // simulate 5s wait time
 
         private static string GetReportSavePath(string suggestedName)
             => OSInteraction.GetSaveFilePath(suggestedName, "pdf", "Portable document files (*.pdf)|*.pdf");
