@@ -5,7 +5,6 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using TourPlanner.Core.Configuration;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 using log4net;
@@ -17,7 +16,6 @@ namespace TourPlanner.GUI.ViewModels
         private bool _darkMode = false, _busy = false, _searchBarVisible = false, _includeDescChecked = false;
         private string _searchText = String.Empty;
         private readonly List<Tour> _tours;
-        private readonly Configuration _config;
         private Tour _selectedTour;
         private readonly IDataProviderFactory _dpFactory;
         private IDirectionsProvider _dir;
@@ -107,7 +105,6 @@ namespace TourPlanner.GUI.ViewModels
         protected MainWindowViewModel(string configFile, IDatabaseClient database, IReportGenerator reportGenerator, IDataProviderFactory dataProvider)
         {
             _log = LogManager.GetLogger(typeof(MainWindowViewModel));
-            _config = OSInteraction.LoadConfig(configFile);
             _db = database;
             _report = reportGenerator;
             _dpFactory = dataProvider;

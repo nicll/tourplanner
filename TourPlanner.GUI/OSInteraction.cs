@@ -18,7 +18,7 @@ namespace TourPlanner.GUI
         private static readonly ILog _log = LogManager.GetLogger(typeof(OSInteraction));
         private static readonly JsonConverter _jsonConverter = new();
 
-        public static Configuration LoadConfig(string configFilePath)
+        public static Config LoadConfig(string configFilePath)
         {
             _log.Debug("Now loading config file \"" + configFilePath + "\".");
             var configFile = new ConfigurationBuilder()
@@ -29,11 +29,11 @@ namespace TourPlanner.GUI
             var section = configFile.GetSection(nameof(TourPlanner));
             _log.Info("Loaded config file \"" + configFilePath + "\".");
 
-            return new Configuration
+            return new Config
             {
-                DirectionsApiConfig = section.GetSection(nameof(Configuration.DirectionsApiConfig)).Get<ApiClientConfig>(),
-                MapImageApiConfig = section.GetSection(nameof(Configuration.MapImageApiConfig)).Get<ApiClientConfig>(),
-                DatabaseConfig = section.GetSection(nameof(Configuration.DatabaseConfig)).Get<DbClientConfig>()
+                DirectionsApiConfig = section.GetSection(nameof(Config.DirectionsApiConfig)).Get<ApiClientConfig>(),
+                MapImageApiConfig = section.GetSection(nameof(Config.MapImageApiConfig)).Get<ApiClientConfig>(),
+                DatabaseConfig = section.GetSection(nameof(Config.DatabaseConfig)).Get<DbClientConfig>()
             };
         }
 

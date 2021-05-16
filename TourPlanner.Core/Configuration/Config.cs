@@ -3,7 +3,7 @@ using TourPlanner.Core.Models;
 
 namespace TourPlanner.Core.Configuration
 {
-    public class Configuration
+    public class Config
     {
         public ApiClientConfig DirectionsApiConfig { get; init; }
 
