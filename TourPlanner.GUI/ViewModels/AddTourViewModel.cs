@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TourPlanner.GUI.Views;
 
@@ -15,7 +16,7 @@ namespace TourPlanner.GUI.ViewModels
         public string Name
         {
             get => _name;
-            set => SetProperty(ref _name, value);
+            set => SetPropertyAndError(ref _name, value);
         }
 
         /// <summary>
@@ -24,7 +25,7 @@ namespace TourPlanner.GUI.ViewModels
         public string StartLocation
         {
             get => _startLocation;
-            set => SetProperty(ref _startLocation, value);
+            set => SetPropertyAndError(ref _startLocation, value);
         }
 
         /// <summary>
@@ -33,17 +34,19 @@ namespace TourPlanner.GUI.ViewModels
         public string EndLocation
         {
             get => _endLocation;
-            set => SetProperty(ref _endLocation, value);
+            set => SetPropertyAndError(ref _endLocation, value);
         }
 
-        public string Error => null;
+        public bool HasNoError => String.IsNullOrEmpty(Error);
+
+        public string Error => this[nameof(Name)] ?? this[nameof(StartLocation)] ?? this[nameof(EndLocation)];
 
         public string this[string columnName] => columnName switch
             {
                 nameof(Name) => String.IsNullOrEmpty(Name) || Name.Length < 4 ? "Enter the name of the new tour." : null,
                 nameof(StartLocation) => String.IsNullOrEmpty(StartLocation) || StartLocation.Length < 3 ? "Enter the address of the starting location." : null,
                 nameof(EndLocation) => String.IsNullOrEmpty(EndLocation) || EndLocation.Length < 3 ? "Enter the address of the destination location." : null,
-                _ => null
+                _ => String.Empty
             };
 
         public ICommand FinishCommand { get; init; }
@@ -55,5 +58,11 @@ namespace TourPlanner.GUI.ViewModels
 
         public AddTourViewModel(AddTourView view)
             => view.DataContext = this;
+
+        private void SetPropertyAndError<T>(ref T storage, T value, [CallerMemberName] string propertyName = "")
+        {
+            SetProperty(ref storage, value, propertyName);
+            OnPropertyChanged(nameof(HasNoError));
+        }
     }
 }

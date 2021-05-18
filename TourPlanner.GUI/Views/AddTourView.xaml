@@ -26,8 +26,7 @@
                 <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="2*"/>
             </Grid.ColumnDefinitions>
-
-
+            
             <Label Grid.Row="0" Grid.Column="0" Content="Name:" HorizontalAlignment="Right" VerticalAlignment="Center"/>
             <Label Grid.Row="1" Grid.Column="0" Content="Starting location:" HorizontalAlignment="Right" VerticalAlignment="Center"/>
             <Label Grid.Row="2" Grid.Column="0" Content="Ending location:" HorizontalAlignment="Right" VerticalAlignment="Center"/>
@@ -37,7 +36,7 @@
             <TextBox Grid.Row="2" Grid.Column="1" Margin="4" Text="{Binding EndLocation, ValidatesOnDataErrors=True}" aext:WatermarkExtension.Watermark="Address of the destination point"/>
 
             <Button Grid.Row="3" Grid.Column="0" Margin="4" Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True"/>
-            <Button Grid.Row="3" Grid.Column="1" Margin="4" Content="Finish" Command="{Binding FinishCommand}" IsDefault="True"/>
+            <Button Grid.Row="3" Grid.Column="1" Margin="4" Content="Finish" Command="{Binding FinishCommand}" IsDefault="True" IsEnabled="{Binding HasNoError}"/>
         </Grid>
     </GroupBox>
 </actl:AdonisWindow>
