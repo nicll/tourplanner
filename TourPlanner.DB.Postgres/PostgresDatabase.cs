@@ -13,22 +13,7 @@ namespace TourPlanner.DB.Postgres
             return Array.Empty<Tour>();
         }
 
-        public async Task AddTour(Tour tour)
-        {
-
-        }
-
-        public async Task UpdateTour(Tour tour)
-        {
-
-        }
-
-        public async Task RemoveTour(Tour tour)
-        {
-
-        }
-
-        public async Task SynchronizeTours(ICollection<Tour> tours)
+        public async Task BatchSynchronize(IReadOnlyCollection<Tour> newTours, IReadOnlyCollection<Tour> removedTours, IReadOnlyCollection<Tour> changedTours)
         {
 
         }

@@ -34,7 +34,8 @@
             <Menu DockPanel.Dock="Top" Grid.Row="0">
                 <MenuItem Header="_File">
                     <MenuItem Header="_Reconnect API" Command="{Binding ResetConnectionCommand}"/>
-                    <MenuItem Header="_Show Search Bar" InputGestureText="F11" Command="{Binding SwitchSearchBarVisibilityCommand}" IsChecked="{Binding IsSearchBarVisible}"/>
+                    <MenuItem Header="_Save to Database" InputGestureText="Ctrl+S" Command="{Binding SynchronizeCommand}"/>
+                    <MenuItem Header="Show Search _Bar" InputGestureText="F11" Command="{Binding SwitchSearchBarVisibilityCommand}" IsChecked="{Binding IsSearchBarVisible}"/>
                     <MenuItem Header="_Dark Theme" InputGestureText="F12" Command="{Binding SwitchThemeCommand}" IsChecked="{Binding IsDarkMode}"/>
                     <MenuItem Header="_Exit" InputGestureText="Ctrl+Q" Command="{Binding ExitApplicationCommand}"/>
                 </MenuItem>

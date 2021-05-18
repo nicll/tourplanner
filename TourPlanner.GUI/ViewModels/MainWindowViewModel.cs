@@ -67,6 +67,8 @@ namespace TourPlanner.GUI.ViewModels
 
         public ICommand ResetConnectionCommand { get; }
 
+        public ICommand SynchronizeCommand { get; }
+
         public ICommand SwitchThemeCommand { get; }
 
         public ICommand SwitchSearchBarVisibilityCommand { get; }
@@ -98,11 +100,12 @@ namespace TourPlanner.GUI.ViewModels
             IsBusy = true;
             _log = LogManager.GetLogger(typeof(MainWindowViewModel));
             ResetConnectionCommand = new RelayCommand(ResetConnection);
+            SynchronizeCommand = new AsyncCommand(Synchronize);
             SwitchThemeCommand = new RelayCommand(SwitchTheme);
             SwitchSearchBarVisibilityCommand = new RelayCommand(SwitchSearchBarVisibility);
             ExitApplicationCommand = new AsyncCommand(ExitApplication);
             AddTourCommand = new AsyncCommand(AddTour);
-            DeleteTourCommand = new AsyncCommand(DeleteTour);
+            DeleteTourCommand = new RelayCommand(DeleteTour);
             AddTourLogCommand = new RelayCommand(AddTourLog);
             DeleteTourLogCommand = new RelayCommand(DeleteTourLog);
             ImportCommand = new AsyncCommand(ImportData);
@@ -137,7 +140,16 @@ namespace TourPlanner.GUI.ViewModels
         }
 
         private void ResetConnection()
-            => _dm.Reinitialize();
+        {
+            if (!IsBusy)
+                _dm.Reinitialize();
+        }
+
+        private async Task Synchronize()
+        {
+            if (!IsBusy)
+                await BusySection(_dm.SynchronizeTours);
+        }
 
         private void SwitchTheme()
         {
@@ -200,7 +212,6 @@ namespace TourPlanner.GUI.ViewModels
 
                 _log.Info("Adding new tour with TourId=\"" + newTour.TourId + "\".");
                 _dm.AllTours.Add(newTour);
-                await _dm.SynchronizeTours();
                 UpdateShownTours();
             });
 
@@ -217,7 +228,7 @@ namespace TourPlanner.GUI.ViewModels
             }
         }
 
-        private async Task DeleteTour()
+        private void DeleteTour()
         {
             if (IsBusy)
                 return;
@@ -227,14 +238,10 @@ namespace TourPlanner.GUI.ViewModels
             if (selectedTour is null)
                 return;
 
-            await BusySection(async () =>
-            {
-                _log.Info("Deleting tour with TourId=\"" + selectedTour.TourId + "\".");
-                SelectedTour = null;
-                _dm.AllTours.Remove(selectedTour);
-                ShownTours.Remove(selectedTour);
-                await _dm.SynchronizeTours();
-            });
+            _log.Info("Deleting tour with TourId=\"" + selectedTour.TourId + "\".");
+            SelectedTour = null;
+            _dm.AllTours.Remove(selectedTour);
+            ShownTours.Remove(selectedTour);
         }
 
         private void AddTourLog()
@@ -265,7 +272,6 @@ namespace TourPlanner.GUI.ViewModels
                 var tours = await OSInteraction.ImportToursFromFile(path);
                 UpdateLoadedTours(tours);
                 UpdateShownTours();
-                await _dm.SynchronizeTours();
             });
         }
 
