@@ -195,8 +195,7 @@ namespace TourPlanner.GUI.ViewModels
                     Name = tourVM.Name,
                     CustomDescription = String.Empty,
                     ImagePath = imagePath,
-                    Route = route,
-                    Log = new List<LogEntry>()
+                    Route = route
                 };
 
                 _log.Info("Adding new tour with TourId=\"" + newTour.TourId + "\".");
