@@ -14,7 +14,7 @@ namespace TourPlanner.GUI.ViewModels
         /// </summary>
         /// <param name="propertyName">Name of the property used to notify listeners.
         /// May be automatically filled in.</param>
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace TourPlanner.GUI.ViewModels
         /// <param name="propertyName">Name of the property used to notify listeners.
         /// May be automatically filled in.</param>
         /// <returns>Whether or not the value was changed.</returns>
-        protected virtual bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = "")
+        protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = "")
         {
             // no change if same value
             if (EqualityComparer<T>.Default.Equals(storage, value))
