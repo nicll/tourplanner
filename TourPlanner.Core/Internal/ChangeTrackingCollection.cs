@@ -31,13 +31,13 @@ namespace TourPlanner.Core.Internal
         /// <summary>
         /// A collection of all modified items.
         /// </summary>
-        public IReadOnlyCollection<T> ChangedItems => this.Where(i => i.IsChanged).ToArray();
+        public IReadOnlyCollection<T> ChangedItems => _currentItems.Except(_removedItems).Where(i => i.IsChanged).ToArray();
 
         public int Count => _currentItems.Count + _newItems.Count - _removedItems.Count;
 
         public bool IsReadOnly => false;
 
-        public bool IsChanged => _newItems.Any() || _removedItems.Any() || this.Any(i => i.IsChanged);
+        public bool IsChanged => _newItems.Any() || _removedItems.Any() || _currentItems.Any(i => i.IsChanged); // no need to check new items for changes
 
         public ChangeTrackingCollection()
         { }
@@ -67,7 +67,10 @@ namespace TourPlanner.Core.Internal
             => _newItems.Contains(item) || (_currentItems.Contains(item) && !_removedItems.Contains(item));
 
         public void CopyTo(T[] array, int arrayIndex)
-            => throw new NotSupportedException("This operation is not permitted.");
+        {
+            _currentItems.Except(_removedItems).ToArray().CopyTo(array, arrayIndex);
+            _newItems.CopyTo(array, _currentItems.Count - _removedItems.Count);
+        }
 
         public IEnumerator<T> GetEnumerator()
             => _currentItems.Except(_removedItems).Concat(_newItems).GetEnumerator();
