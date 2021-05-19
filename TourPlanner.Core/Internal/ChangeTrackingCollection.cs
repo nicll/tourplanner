@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using TourPlanner.Core.Interfaces;
 
 namespace TourPlanner.Core.Internal
 {
@@ -11,26 +12,17 @@ namespace TourPlanner.Core.Internal
     /// It is assumed that every object is unique.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
-    internal class ChangeTrackingCollection<T> : ICollection<T>, IChangeTracking where T : IChangeTracking
+    internal class ChangeTrackingCollection<T> : IChangeTrackingCollection<T> where T : IChangeTracking
     {
         private readonly List<T>
             _currentItems = new(),
             _newItems = new(),
             _removedItems = new();
 
-        /// <summary>
-        /// A collection of all added items.
-        /// </summary>
         public IReadOnlyCollection<T> NewItems => _newItems;
 
-        /// <summary>
-        /// A collection of all removed items.
-        /// </summary>
         public IReadOnlyCollection<T> RemovedItems => _removedItems;
 
-        /// <summary>
-        /// A collection of all modified items.
-        /// </summary>
         public IReadOnlyCollection<T> ChangedItems => _currentItems.Except(_removedItems).Where(i => i.IsChanged).ToArray();
 
         public int Count => _currentItems.Count + _newItems.Count - _removedItems.Count;

@@ -14,7 +14,7 @@ namespace TourPlanner.Core.Interfaces
 
         IReportGenerator ReportGenerator { get; }
 
-        ICollection<Tour> AllTours { get; }
+        IChangeTrackingCollection<Tour> AllTours { get; }
 
         Task Reinitialize();
 

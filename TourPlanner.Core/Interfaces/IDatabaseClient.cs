@@ -9,6 +9,6 @@ namespace TourPlanner.Core.Interfaces
     {
         Task<ICollection<Tour>> QueryTours();
 
-        Task BatchSynchronize(IReadOnlyCollection<Tour> newTours, IReadOnlyCollection<Tour> removedTours, IReadOnlyCollection<Tour> changedTours);
+        Task BatchSynchronize(IChangeTrackingCollection<Tour> tours);
     }
 }

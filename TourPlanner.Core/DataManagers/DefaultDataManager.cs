@@ -24,7 +24,7 @@ namespace TourPlanner.Core.DataManagers
 
         public IReportGenerator ReportGenerator { get; }
 
-        public ICollection<Tour> AllTours => _tours;
+        public IChangeTrackingCollection<Tour> AllTours => _tours;
 
         internal DefaultDataManager(IDataProviderFactory dpFactory, IDatabaseClientFactory dbFactory, IReportGenerator reports)
         {
@@ -65,7 +65,7 @@ namespace TourPlanner.Core.DataManagers
             if (!_tours.IsChanged)
                 return;
 
-            await _db.BatchSynchronize(_tours.NewItems, _tours.RemovedItems, _tours.ChangedItems);
+            await _db.BatchSynchronize(_tours);
             _tours.AcceptChanges();
         }
     }

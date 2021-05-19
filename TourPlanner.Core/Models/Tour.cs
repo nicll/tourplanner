@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Internal;
 
 namespace TourPlanner.Core.Models
@@ -54,9 +55,11 @@ namespace TourPlanner.Core.Models
         /// <summary>
         /// Contains the log entries for this tour.
         /// </summary>
-        public ICollection<LogEntry> Log => _log;
+        public IChangeTrackingCollection<LogEntry> Log => _log;
 
-        public bool IsChanged => _tracker.IsChanged;
+        public bool IsChanged => _tracker.IsChanged || _log.IsChanged;
+
+        public bool IsTourChanged => _tracker.IsChanged;
 
         public void AcceptChanges()
         {
