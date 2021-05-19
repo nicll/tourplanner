@@ -63,7 +63,7 @@ namespace TourPlanner.GUI.ViewModels
             set => SetProperty(ref _selectedTour, value);
         }
 
-        public ObservableCollection<Tour> ShownTours { get; protected set; }
+        public ObservableCollection<Tour> ShownTours { get; protected set; } = new();
 
         public ICommand ResetConnectionCommand { get; }
 
@@ -122,18 +122,13 @@ namespace TourPlanner.GUI.ViewModels
                 throw new InvalidOperationException("Data manager has already been set.");
 
             _dm = dataManager;
+            UpdateShownTours();
             IsBusy = false;
         }
 
-        protected void UpdateLoadedTours(IList<Tour> tours)
+        protected void OverwriteTours(ICollection<Tour> tours)
         {
             _dm.AllTours.Clear();
-
-            if (_dm.AllTours is List<Tour> allTours)
-            {
-                allTours.AddRange(tours);
-                return;
-            }
 
             foreach (var tour in tours)
                 _dm.AllTours.Add(tour);
@@ -270,7 +265,7 @@ namespace TourPlanner.GUI.ViewModels
             {
                 _log.Info("Importing data from file \"" + path + "\".");
                 var tours = await OSInteraction.ImportToursFromFile(path);
-                UpdateLoadedTours(tours);
+                OverwriteTours(tours);
                 UpdateShownTours();
             });
         }
@@ -347,12 +342,12 @@ namespace TourPlanner.GUI.ViewModels
         private void UpdateShownTours()
         {
             Func<Tour, bool> isContained = IsIncludeDescriptionChecked ? IsInNameOrDesc : IsInName;
-            ShownTours.Clear();
+            App.Current.Dispatcher.Invoke(() => ShownTours.Clear());
 
             foreach (var tour in _dm.AllTours)
             {
                 if (isContained(tour))
-                    ShownTours.Add(tour);
+                    App.Current.Dispatcher.Invoke(() => ShownTours.Add(tour));
             }
 
             bool IsInName(Tour tour) => tour.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
