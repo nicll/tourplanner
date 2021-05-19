@@ -66,7 +66,7 @@
                         </ScrollViewer>
                     </TabItem>
                     <TabItem Header="Description">
-                        <TextBox Text="{Binding SelectedTour.CustomDescription}" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"/>
+                        <TextBox Text="{Binding SelectedTour.CustomDescription}" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" MaxLength="2048"/>
                     </TabItem>
                     <TabItem Header="Steps">
                         <DataGrid ItemsSource="{Binding SelectedTour.Route.Steps}" AutoGenerateColumns="False" IsReadOnly="True">
