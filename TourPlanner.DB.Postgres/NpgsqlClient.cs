@@ -1,4 +1,5 @@
-﻿using Npgsql;
+﻿using log4net;
+using Npgsql;
 using Npgsql.Logging;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace TourPlanner.DB.Postgres
         private class DbTour { public DbTourInfo Tour; public List<Step> Steps = new(); public List<LogEntry> Log = new(); }
 
         private readonly string _connectionString;
+        private readonly ILog _log = LogManager.GetLogger(typeof(NpgsqlClient));
 
         static NpgsqlClient()
             => NpgsqlLogManager.Provider = new Log4NetNpgsqlLoggingProvider(nameof(NpgsqlClient) + "Logger") { CommandLoggerName = nameof(NpgsqlClient) + "CommandLogger" };
@@ -63,23 +65,24 @@ namespace TourPlanner.DB.Postgres
                 }
             }
 
-            using (var cmd = new NpgsqlCommand("SELECT tourid, date, distance, duration, rating FROM log_entries", conn))
+            using (var cmd = new NpgsqlCommand("SELECT logid, tourid, date, distance, duration, rating FROM log_entries", conn))
             {
                 using var reader = await cmd.ExecuteReaderAsync();
 
                 while (await reader.ReadAsync())
                 {
-                    currentTourId = reader.GetGuid(0);
+                    currentTourId = reader.GetGuid(1);
 
                     if (!dict.TryGetValue(currentTourId, out var tour))
                         throw null;
 
                     tour.Log.Add(new()
                     {
-                        Date = reader.GetDateTime(1),
-                        Distance = reader.GetDouble(2),
-                        Duration = reader.GetTimeSpan(3),
-                        Rating = reader.GetFloat(4)
+                        LogId = reader.GetGuid(0),
+                        Date = reader.GetDateTime(2),
+                        Distance = reader.GetDouble(3),
+                        Duration = reader.GetTimeSpan(4),
+                        Rating = reader.GetFloat(5)
                     });
                 }
             }
@@ -97,23 +100,25 @@ namespace TourPlanner.DB.Postgres
                 });
             }
 
+            _log.Info("Loaded tours from database.");
             return ret;
         }
 
-        public async Task BatchSynchronize(IReadOnlyCollection<Tour> newTours, IReadOnlyCollection<Tour> removedTours, IReadOnlyCollection<Tour> changedTours)
+        public async Task BatchSynchronize(IChangeTrackingCollection<Tour> tours)
         {
             using var conn = await OpenConnection();
             using var trans = await conn.BeginTransactionAsync();
 
-            await InsertTours(conn, trans, newTours);
-            await RemoveTours(conn, trans, removedTours);
-            await UpdateTours(conn, trans, changedTours);
+            await InsertTours(conn, trans, tours.NewItems);
+            await RemoveTours(conn, trans, tours.RemovedItems);
+            await UpdateTours(conn, trans, tours.ChangedItems);
 
             await trans.CommitAsync();
         }
 
         private async Task<NpgsqlConnection> OpenConnection()
         {
+            _log.Debug("Opening connection to database.");
             var conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync().ConfigureAwait(false);
             // manual closing is not required as long as the using keyword is used
@@ -141,13 +146,14 @@ namespace TourPlanner.DB.Postgres
                 await cmd.ExecuteNonQueryAsync();
             }
 
+            // log entries may not exist for new tours
             if (!tours.Any(t => t.Log.Any()))
                 return;
 
             using (var cmd = new NpgsqlCommand("INSERT INTO log_entries VALUES ", conn, trans))
             {
-                cmd.CommandText += ManyDataToNpgsqlCommand<Tour, IEnumerable<(Guid, DateTime, double, TimeSpan, float)>, (Guid, DateTime, double, TimeSpan, float)>
-                    (cmd, tours, t => t.Log.Select(l => (t.TourId, l.Date, l.Distance, l.Duration, l.Rating)), x => x.Item1, x => x.Item2, x => x.Item3, x => x.Item4, x => x.Item5);
+                cmd.CommandText += ManyDataToNpgsqlCommand<Tour, IEnumerable<(Guid, Guid, DateTime, double, TimeSpan, float)>, (Guid, Guid, DateTime, double, TimeSpan, float)>
+                    (cmd, tours, t => t.Log.Select(l => (l.LogId, t.TourId, l.Date, l.Distance, l.Duration, l.Rating)), x => x.Item1, x => x.Item2, x => x.Item3, x => x.Item4, x => x.Item5, x => x.Item6);
 
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -173,7 +179,79 @@ namespace TourPlanner.DB.Postgres
             if (!tours.Any())
                 return;
 
-            using var cmd = new NpgsqlCommand(String.Empty, conn, trans);
+            // certain properties are readonly, we only need to update:
+            // name, description, log_entries
+
+            using var cmd = new NpgsqlCommand("UPDATE tours SET name = @name, description = @desc WHERE tourid = @tid", conn, trans);
+            cmd.Parameters.Add("@name", NpgsqlTypes.NpgsqlDbType.Varchar);
+            cmd.Parameters.Add("@desc", NpgsqlTypes.NpgsqlDbType.Varchar);
+            cmd.Parameters.Add("@tid", NpgsqlTypes.NpgsqlDbType.Uuid);
+
+            foreach (var tour in tours)
+            {
+                if (tour.IsTourChanged)
+                {
+                    cmd.Parameters["@name"].Value = tour.Name;
+                    cmd.Parameters["@desc"].Value = tour.CustomDescription;
+                    cmd.Parameters["@tid"].Value = tour.TourId;
+                    await cmd.ExecuteNonQueryAsync();
+                }
+
+                if (tour.Log.IsChanged)
+                {
+                    await InsertLogs(conn, trans, tour.TourId, tour.Log.NewItems);
+                    await RemoveLogs(conn, trans, tour.Log.RemovedItems);
+                    await UpdateLogs(conn, trans, tour.Log.ChangedItems);
+                }
+            }
+        }
+
+        private static async Task InsertLogs(NpgsqlConnection conn, NpgsqlTransaction trans, Guid tourId, IReadOnlyCollection<LogEntry> log)
+        {
+            if (!log.Any())
+                return;
+
+            using var cmd = new NpgsqlCommand("INSERT INTO log_entries VALUES ", conn, trans);
+            cmd.CommandText += DataToNpgsqlCommand(cmd, log, l => l.LogId, _ => tourId, l => l.Date, l => l.Distance, l => l.Duration, l => l.Rating);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        private static async Task RemoveLogs(NpgsqlConnection conn, NpgsqlTransaction trans, IReadOnlyCollection<LogEntry> log)
+        {
+            if (!log.Any())
+                return;
+
+            using var cmd = new NpgsqlCommand("DELETE FROM log_entries WHERE logid = @lid", conn, trans);
+            cmd.Parameters.Add("@lid", NpgsqlTypes.NpgsqlDbType.Uuid);
+
+            foreach (var entry in log)
+            {
+                cmd.Parameters["@lid"].Value = entry.LogId;
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        private static async Task UpdateLogs(NpgsqlConnection conn, NpgsqlTransaction trans, IReadOnlyCollection<LogEntry> log)
+        {
+            if (!log.Any())
+                return;
+
+            using var cmd = new NpgsqlCommand("UPDATE log_entries SET date = @date, distance = @dist, duration = @drtn, rating = @rtng WHERE logid = @lid", conn, trans);
+            cmd.Parameters.Add("@date", NpgsqlTypes.NpgsqlDbType.Date);
+            cmd.Parameters.Add("@dist", NpgsqlTypes.NpgsqlDbType.Double);
+            cmd.Parameters.Add("@drtn", NpgsqlTypes.NpgsqlDbType.Interval);
+            cmd.Parameters.Add("@rtng", NpgsqlTypes.NpgsqlDbType.Real);
+            cmd.Parameters.Add("@lid", NpgsqlTypes.NpgsqlDbType.Uuid);
+
+            foreach (var entry in log)
+            {
+                cmd.Parameters["@date"].Value = entry.Date;
+                cmd.Parameters["@dist"].Value = entry.Distance;
+                cmd.Parameters["@drtn"].Value = entry.Duration;
+                cmd.Parameters["@rtng"].Value = entry.Rating;
+                cmd.Parameters["@lid"].Value = entry.LogId;
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
         private static string DataToNpgsqlCommand<T>(NpgsqlCommand cmd, IReadOnlyCollection<T> data, params Func<T, object>[] selectors)

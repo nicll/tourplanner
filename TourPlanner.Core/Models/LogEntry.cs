@@ -16,6 +16,11 @@ namespace TourPlanner.Core.Models
         private float _rating;
 
         /// <summary>
+        /// A unique ID for identifying the log entry.
+        /// </summary>
+        public Guid LogId { get; init; }
+
+        /// <summary>
         /// Date and time when the log entry was performed.
         /// </summary>
         public DateTime Date
