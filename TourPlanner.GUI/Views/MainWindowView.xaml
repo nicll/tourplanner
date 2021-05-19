@@ -10,11 +10,7 @@
                    xmlns:aext="clr-namespace:AdonisUI.Extensions;assembly=AdonisUI"
                    mc:Ignorable="d"
                    d:DataContext="{d:DesignInstance Type=vm:DesignMainWindowViewModel, IsDesignTimeCreatable=True}"
-                   Title="TourPlanner Overview" Height="400" Width="600">
-    <!-- ToDo: make height auto -->
-    <Window.DataContext>
-        <vm:MainWindowViewModelInit/>
-    </Window.DataContext>
+                   Title="TourPlanner Overview" Height="400" Width="600" Closing="ClosingHandler">
     <Window.Style>
         <Style TargetType="Window" BasedOn="{StaticResource {x:Type Window}}"/>
     </Window.Style>

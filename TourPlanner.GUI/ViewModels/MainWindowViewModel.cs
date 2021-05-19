@@ -13,11 +13,12 @@ namespace TourPlanner.GUI.ViewModels
 {
     public abstract class MainWindowViewModel : ViewModelBase
     {
+        private readonly ILog _log;
         private bool _darkMode = false, _busy = false, _searchBarVisible = false, _includeDescChecked = false;
         private string _searchText = String.Empty;
-        private Tour _selectedTour;
         private IDataManager _dm;
-        private readonly ILog _log;
+        private Tour _selectedTour;
+        private LogEntry _selectedLogEntry;
 
         public bool IsDarkMode
         {
@@ -61,6 +62,12 @@ namespace TourPlanner.GUI.ViewModels
         {
             get => _selectedTour;
             set => SetProperty(ref _selectedTour, value);
+        }
+
+        public LogEntry SelectedLogEntry
+        {
+            get => _selectedLogEntry;
+            set => SetProperty(ref _selectedLogEntry, value);
         }
 
         public ObservableCollection<Tour> ShownTours { get; protected set; } = new();
@@ -156,10 +163,44 @@ namespace TourPlanner.GUI.ViewModels
         private void SwitchSearchBarVisibility()
             => IsSearchBarVisible = !IsSearchBarVisible;
 
-        private Task ExitApplication()
+        public async Task<bool> ExitApplicationWrapper()
+            => await ExitApplication();
+
+        private async Task<bool> ExitApplication()
         {
-            Application.Current.Shutdown();
-            return Task.CompletedTask;
+            if (IsBusy)
+                return false;
+
+            if (_dm.AllTours.IsChanged)
+            {
+                var msgBoxModel = new AdonisUI.Controls.MessageBoxModel()
+                {
+                    Caption = "Save changes?",
+                    Icon = AdonisUI.Controls.MessageBoxImage.Question,
+                    IsSoundEnabled = true,
+                    Text = "Do you want to synchronize any unsaved changes?",
+                    Buttons = new[]
+                    {
+                        new AdonisUI.Controls.MessageBoxButtonModel("Yes", AdonisUI.Controls.MessageBoxResult.Yes),
+                        new AdonisUI.Controls.MessageBoxButtonModel("No", AdonisUI.Controls.MessageBoxResult.No),
+                        new AdonisUI.Controls.MessageBoxButtonModel("Cancel", AdonisUI.Controls.MessageBoxResult.Cancel)
+                    }
+                };
+
+                AdonisUI.Controls.MessageBox.Show(App.Current.MainWindow, msgBoxModel);
+
+                switch (msgBoxModel.Result)
+                {
+                    case AdonisUI.Controls.MessageBoxResult.Yes:
+                        await BusySection(_dm.SynchronizeTours);
+                        break;
+                    case AdonisUI.Controls.MessageBoxResult.Cancel:
+                        return true;
+                }
+            }
+
+            App.Current.Shutdown();
+            return false;
         }
 
         private async Task AddTour()
@@ -241,14 +282,22 @@ namespace TourPlanner.GUI.ViewModels
 
         private void AddTourLog()
         {
-            if (IsBusy)
+            if (IsBusy || SelectedTour is null)
                 return;
+
+            var newEntry = new LogEntry { LogId = Guid.NewGuid() };
+            SelectedTour.Log.Add(newEntry);
+            SelectedLogEntry = newEntry;
         }
 
         private void DeleteTourLog()
         {
-            if (IsBusy)
+            if (IsBusy || SelectedTour is null || SelectedLogEntry is null)
                 return;
+
+            var deletedEntry = SelectedLogEntry;
+            SelectedLogEntry = null;
+            SelectedTour.Log.Remove(deletedEntry);
         }
 
         public async Task ImportData()

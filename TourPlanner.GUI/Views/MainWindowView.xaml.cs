@@ -1,5 +1,7 @@
 ﻿using AdonisUI.Controls;
 using System;
+using System.Threading.Tasks;
+using TourPlanner.GUI.ViewModels;
 
 namespace TourPlanner.GUI.Views
 {
@@ -8,9 +10,17 @@ namespace TourPlanner.GUI.Views
     /// </summary>
     public partial class MainWindowView : AdonisWindow
     {
+        private readonly Func<Task<bool>> _vmCloseHandler;
+
         public MainWindowView()
         {
             InitializeComponent();
+            var vm = new MainWindowViewModelInit();
+            DataContext = vm;
+            _vmCloseHandler = vm.ExitApplicationWrapper;
         }
+
+        private async void ClosingHandler(object sender, System.ComponentModel.CancelEventArgs e)
+            => e.Cancel = await _vmCloseHandler();
     }
 }
