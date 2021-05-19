@@ -8,6 +8,6 @@ namespace TourPlanner.DB.Postgres
     public class PostgresDatabaseFactory : IDatabaseClientFactory
     {
         public async ValueTask<IDatabaseClient> CreateDatabaseClient(DbClientConfig config)
-            => new PostgresDatabase(); // ToDo: just a placeholder for now
+            => new NpgsqlClient(config.ConnectionString); // ToDo: maybe caching?
     }
 }
