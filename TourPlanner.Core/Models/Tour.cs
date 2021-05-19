@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using TourPlanner.Core.Internal;
 
 namespace TourPlanner.Core.Models
@@ -22,6 +23,7 @@ namespace TourPlanner.Core.Models
         /// <summary>
         /// A user-decided name for the tour.
         /// </summary>
+        [MaxLength(64)]
         public string Name
         {
             get => _name;
@@ -36,6 +38,7 @@ namespace TourPlanner.Core.Models
         /// <summary>
         /// A user-decided description for the tour.
         /// </summary>
+        [MaxLength(2048)]
         public string CustomDescription
         {
             get => _description;

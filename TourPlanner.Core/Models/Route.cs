@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
 namespace TourPlanner.Core.Models
@@ -30,11 +31,13 @@ namespace TourPlanner.Core.Models
         /// <summary>
         /// The address of the starting point.
         /// </summary>
+        [MaxLength(64)]
         public string StartLocation { get; init; }
 
         /// <summary>
         /// The address of the ending point.
         /// </summary>
+        [MaxLength(64)]
         public string EndLocation { get; init; }
 
         /// <summary>
