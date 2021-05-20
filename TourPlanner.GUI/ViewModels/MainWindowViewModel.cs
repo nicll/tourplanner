@@ -8,6 +8,8 @@ using System.Windows.Input;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 using log4net;
+using System.ComponentModel;
+using System.Windows.Data;
 
 namespace TourPlanner.GUI.ViewModels
 {
@@ -18,6 +20,7 @@ namespace TourPlanner.GUI.ViewModels
         private string _searchText = String.Empty;
         private IDataManager _dm;
         private Tour _selectedTour;
+        private IEditableCollectionView _selectedLog;
         private LogEntry _selectedLogEntry;
 
         public bool IsDarkMode
@@ -61,10 +64,21 @@ namespace TourPlanner.GUI.ViewModels
         public Tour SelectedTour
         {
             get => _selectedTour;
-            set => SetProperty(ref _selectedTour, value);
+            set
+            {
+                SetProperty(ref _selectedTour, value);
+                SelectedTourLog = new ListCollectionView(value.Log);
+                SelectedTourLogEntry = null;
+            }
         }
 
-        public LogEntry SelectedLogEntry
+        public IEditableCollectionView SelectedTourLog
+        {
+            get => _selectedLog;
+            set => SetProperty(ref _selectedLog, value);
+        }
+
+        public LogEntry SelectedTourLogEntry
         {
             get => _selectedLogEntry;
             set => SetProperty(ref _selectedLogEntry, value);
@@ -75,6 +89,8 @@ namespace TourPlanner.GUI.ViewModels
         public ICommand ResetConnectionCommand { get; }
 
         public ICommand SynchronizeCommand { get; }
+
+        public ICommand CleanupCommand { get; }
 
         public ICommand SwitchThemeCommand { get; }
 
@@ -108,6 +124,7 @@ namespace TourPlanner.GUI.ViewModels
             _log = LogManager.GetLogger(typeof(MainWindowViewModel));
             ResetConnectionCommand = new RelayCommand(ResetConnection);
             SynchronizeCommand = new AsyncCommand(Synchronize);
+            CleanupCommand = new AsyncCommand(Cleanup);
             SwitchThemeCommand = new RelayCommand(SwitchTheme);
             SwitchSearchBarVisibilityCommand = new RelayCommand(SwitchSearchBarVisibility);
             ExitApplicationCommand = new AsyncCommand(ExitApplication);
@@ -151,6 +168,12 @@ namespace TourPlanner.GUI.ViewModels
         {
             if (!IsBusy)
                 await BusySection(_dm.SynchronizeTours);
+        }
+
+        private async Task Cleanup()
+        {
+            if (!IsBusy)
+                await _dm.CleanCache();
         }
 
         private void SwitchTheme()
@@ -287,17 +310,17 @@ namespace TourPlanner.GUI.ViewModels
 
             var newEntry = new LogEntry { LogId = Guid.NewGuid() };
             SelectedTour.Log.Add(newEntry);
-            SelectedLogEntry = newEntry;
+            SelectedTourLogEntry = newEntry;
         }
 
         private void DeleteTourLog()
         {
-            if (IsBusy || SelectedTour is null || SelectedLogEntry is null)
+            if (IsBusy || SelectedTour is null || SelectedTourLogEntry is null)
                 return;
 
-            var deletedEntry = SelectedLogEntry;
-            SelectedLogEntry = null;
-            SelectedTour.Log.Remove(deletedEntry);
+            var deletedEntry = SelectedTourLogEntry;
+            SelectedTourLogEntry = null;
+            SelectedTourLog.Remove(deletedEntry);
         }
 
         public async Task ImportData()

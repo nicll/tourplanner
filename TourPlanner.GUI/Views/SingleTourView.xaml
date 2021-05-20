@@ -88,7 +88,7 @@
                     <Button DockPanel.Dock="Right" Padding="4" Content="Add" Command="{Binding AddTourLogCommand}"/>
                     <Label DockPanel.Dock="Left" Padding="4" Content="Logs:"/>
                 </DockPanel>
-                <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedTour.Log}" SelectedItem="{Binding SelectedLogEntry, Mode=TwoWay}"
+                <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedTourLog}" SelectedItem="{Binding SelectedTourLogEntry, Mode=TwoWay}"
                           AutoGenerateColumns="False" IsReadOnly="False"
                           ScrollViewer.CanContentScroll="True"
                           aext:ScrollViewerExtension.HideScrollBarsUntilMouseOver="True"
