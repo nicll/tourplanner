@@ -13,7 +13,7 @@ namespace TourPlanner.Core.Models
     public class Tour : IChangeTracking
     {
         private readonly ChangeTracker _tracker = new();
-        private readonly ChangeTrackingCollection<LogEntry> _log;
+        private readonly ChangeTrackingList<LogEntry> _log;
         private string _name, _description;
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace TourPlanner.Core.Models
         /// <summary>
         /// Contains the log entries for this tour.
         /// </summary>
-        public IChangeTrackingCollection<LogEntry> Log => _log;
+        public IChangeTrackingList<LogEntry> Log => _log;
 
         public bool IsChanged => _tracker.IsChanged || _log.IsChanged;
 
@@ -68,9 +68,9 @@ namespace TourPlanner.Core.Models
         }
 
         public Tour()
-            => _log = new ChangeTrackingCollection<LogEntry>();
+            => _log = new ChangeTrackingList<LogEntry>();
 
-        public Tour(ICollection<LogEntry> logEntries)
-            => _log = new ChangeTrackingCollection<LogEntry>(logEntries);
+        public Tour(IList<LogEntry> logEntries)
+            => _log = new ChangeTrackingList<LogEntry>(logEntries);
     }
 }
