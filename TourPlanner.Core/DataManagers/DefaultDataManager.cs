@@ -68,5 +68,10 @@ namespace TourPlanner.Core.DataManagers
             await _db.BatchSynchronize(_tours);
             _tours.AcceptChanges();
         }
+
+        public async Task CleanCache()
+        {
+            // ToDo
+        }
     }
 }

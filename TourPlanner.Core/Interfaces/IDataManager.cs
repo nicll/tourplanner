@@ -21,5 +21,7 @@ namespace TourPlanner.Core.Interfaces
         Task Reinitialize(Config config);
 
         Task SynchronizeTours();
+
+        Task CleanCache();
     }
 }
