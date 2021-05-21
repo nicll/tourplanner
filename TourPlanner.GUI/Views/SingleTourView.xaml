@@ -89,7 +89,7 @@
                     <Label DockPanel.Dock="Left" Padding="4" Content="Logs:"/>
                 </DockPanel>
                 <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedTourLog}" SelectedItem="{Binding SelectedTourLogEntry, Mode=TwoWay}"
-                          AutoGenerateColumns="False" IsReadOnly="False"
+                          AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False" CanUserDeleteRows="False"
                           ScrollViewer.CanContentScroll="True"
                           aext:ScrollViewerExtension.HideScrollBarsUntilMouseOver="True"
                           aext:ScrollViewerExtension.VerticalScrollBarExpansionMode="NeverExpand"
