@@ -28,30 +28,16 @@ namespace TourPlanner.Core.Internal
 
         private int PublicIndexToInternalIndex(int publicIndex)
         {
-            /*
-            int i = publicIndex;
-            int remaining = _items.Take(i + 1).Count(i => i.state == ChangeState.Removed);
-
-            while (remaining > 0)
-            {
-                int temp = remaining;
-                remaining = _items.Skip(i + 1).Take(remaining).Count(i => i.state == ChangeState.Removed);
-                i += temp;
-            }
-
-            return i;
-            */
-
-            int c = 0;
+            int count = 0;
             int rem = publicIndex + 1;
             do
             {
                 int temp = rem;
-                rem = _items.Skip(c).Take(rem).Count(i => i.state == ChangeState.Removed);
-                c += temp;
+                rem = _items.Skip(count).Take(rem).Count(i => i.state == ChangeState.Removed);
+                count += temp;
             } while (rem > 0);
 
-            return c - 1;
+            return count - 1;
         }
 
         public ChangeTrackingList()
