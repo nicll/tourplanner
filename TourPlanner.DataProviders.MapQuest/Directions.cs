@@ -31,6 +31,9 @@ namespace TourPlanner.DataProviders.MapQuest
             return route;
         }
 
+        public ValueTask CleanCache(IDataManager dataManager)
+            => ValueTask.CompletedTask;
+
         private async Task<Route> FetchRoute(string from, string to)
         {
             _log.Debug("Requesting route from API from=\"" + from + "\" to=\"" + to + "\"");

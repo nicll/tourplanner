@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,10 +30,15 @@ namespace TourPlanner.DataProviders.MapQuest
             return imagePath;
         }
 
-        public ValueTask ClearCache()
+        public ValueTask CleanCache(IDataManager dataManager)
         {
             foreach (var filePath in Directory.EnumerateFiles(RelativeImageContainerPath))
             {
+                var fileRouteId = Path.GetFileNameWithoutExtension(filePath);
+
+                if (dataManager.AllTours.Any(t => t.Route.RouteId == fileRouteId))
+                    continue; // skip if still exists
+
                 File.Delete(filePath);
                 _log.Debug("Deleted file in image cache: " + filePath);
             }
