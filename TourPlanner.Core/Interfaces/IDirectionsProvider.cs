@@ -17,5 +17,11 @@ namespace TourPlanner.Core.Interfaces
         /// <param name="to">The ending point.</param>
         /// <returns>Found route or <see langword="null"/>.</returns>
         ValueTask<Route> GetRoute(string from, string to);
+
+        /// <summary>
+        /// Clears any unnecessary information from the cache.
+        /// </summary>
+        /// <param name="dataManager">The data manager.</param>
+        ValueTask CleanCache(IDataManager dataManager);
     }
 }

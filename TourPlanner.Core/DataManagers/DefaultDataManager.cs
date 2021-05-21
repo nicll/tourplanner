@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using TourPlanner.Core.Configuration;
 using TourPlanner.Core.Interfaces;
@@ -71,7 +70,8 @@ namespace TourPlanner.Core.DataManagers
 
         public async Task CleanCache()
         {
-            // ToDo
+            await _dpDir.CleanCache(this);
+            await _dpImg.CleanCache(this);
         }
     }
 }

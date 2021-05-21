@@ -19,8 +19,9 @@ namespace TourPlanner.Core.Interfaces
         ValueTask<string> GetImage(Route route);
 
         /// <summary>
-        /// Empties the cache of downloaded image files.
+        /// Clears any unnecessary information from the cache.
         /// </summary>
-        ValueTask ClearCache();
+        /// <param name="dataManager">The data manager.</param>
+        ValueTask CleanCache(IDataManager dataManager);
     }
 }
