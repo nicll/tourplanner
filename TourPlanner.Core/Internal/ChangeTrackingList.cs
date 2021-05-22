@@ -133,12 +133,19 @@ namespace TourPlanner.Core.Internal
 
         public bool Remove(T item)
         {
-            var index = InternalIndexOf(item);
+            var internalIndex = InternalIndexOf(item);
 
-            if (index == -1 || _items[index].state == ChangeState.Removed)
+            if (internalIndex == -1 || _items[internalIndex].state == ChangeState.Removed)
                 return false;
 
-            _items[index] = (ChangeState.Removed, _items[index].item);
+            // if not yet accepted
+            if (_items[internalIndex].state == ChangeState.New)
+            {
+                _items.RemoveAt(internalIndex);
+                return true;
+            }
+
+            _items[internalIndex] = (ChangeState.Removed, _items[internalIndex].item);
             return true;
         }
 
@@ -148,6 +155,13 @@ namespace TourPlanner.Core.Internal
 
             if (internalIndex == -1)
                 throw new ArgumentOutOfRangeException(nameof(index));
+
+            // if not yet accepted
+            if (_items[internalIndex].state == ChangeState.New)
+            {
+                _items.RemoveAt(internalIndex);
+                return;
+            }
 
             _items[internalIndex] = (ChangeState.Removed, _items[internalIndex].item);
         }
