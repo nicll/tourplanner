@@ -40,7 +40,7 @@ namespace TourPlanner.Core.Internal
         public void Add(T item)
         {
             if (_newItems.Contains(item) || _currentItems.Contains(item))
-                throw new InvalidOperationException("");
+                throw new InvalidOperationException("This item has already been stored.");
 
             _newItems.Add(item);
         }
