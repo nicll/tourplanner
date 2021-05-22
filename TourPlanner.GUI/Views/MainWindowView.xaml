@@ -18,6 +18,7 @@
         <BooleanToVisibilityConverter x:Key="boolConverter"/>
     </Window.Resources>
     <Window.InputBindings>
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding SynchronizeCommand}"/>
         <KeyBinding Gesture="Ctrl+Q" Command="{Binding ExitApplicationCommand}"/>
         <KeyBinding Gesture="F11" Command="{Binding SwitchSearchBarVisibilityCommand}"/>
         <KeyBinding Gesture="F12" Command="{Binding SwitchThemeCommand}"/>
