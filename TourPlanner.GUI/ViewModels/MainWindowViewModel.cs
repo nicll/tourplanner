@@ -8,7 +8,6 @@ using System.Windows.Input;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 using log4net;
-using System.ComponentModel;
 using System.Windows.Data;
 
 namespace TourPlanner.GUI.ViewModels
@@ -20,7 +19,7 @@ namespace TourPlanner.GUI.ViewModels
         private string _searchText = String.Empty;
         private IDataManager _dm;
         private Tour _selectedTour;
-        private IEditableCollectionView _selectedLog;
+        private ListCollectionView _selectedLog;
         private LogEntry _selectedLogEntry;
 
         public bool IsDarkMode
@@ -67,12 +66,13 @@ namespace TourPlanner.GUI.ViewModels
             set
             {
                 SetProperty(ref _selectedTour, value);
-                SelectedTourLog = new ListCollectionView(value.Log);
+                SelectedTourLog = new ListCollectionView(value?.Log
+                    ?? (System.Collections.IList)Array.Empty<LogEntry>());
                 SelectedTourLogEntry = null;
             }
         }
 
-        public IEditableCollectionView SelectedTourLog
+        public ListCollectionView SelectedTourLog
         {
             get => _selectedLog;
             set => SetProperty(ref _selectedLog, value);
@@ -309,7 +309,8 @@ namespace TourPlanner.GUI.ViewModels
                 return;
 
             var newEntry = new LogEntry { LogId = Guid.NewGuid() };
-            SelectedTour.Log.Add(newEntry);
+            SelectedTourLog.AddNewItem(newEntry);
+            SelectedTourLog.CommitNew();
             SelectedTourLogEntry = newEntry;
         }
 
