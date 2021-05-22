@@ -53,7 +53,7 @@
                             <Label Grid.Row="0" Grid.Column="1" Content="{Binding SelectedTour.Route.StartLocation}" FontWeight="Normal"/>
                             <Label Grid.Row="1" Grid.Column="1" Content="{Binding SelectedTour.Route.EndLocation}" FontWeight="Normal"/>
                             <Label Grid.Row="2" Grid.Column="1" Content="{Binding SelectedTour.Route.Steps.Count}" ContentStringFormat="{}{0} step(s)" FontWeight="Normal"/>
-                            <Label Grid.Row="3" Grid.Column="1" Content="{Binding SelectedTour.Route.TotalDistance}" ContentStringFormat="{}{0} km" FontWeight="Normal"/>
+                            <Label Grid.Row="3" Grid.Column="1" Content="{Binding SelectedTour.Route.TotalDistance}" ContentStringFormat="{}{0:0.##} km" FontWeight="Normal"/>
                         </Grid>
                     </TabItem>
                     <TabItem Header="Route">
@@ -71,7 +71,7 @@
                     <TabItem Header="Steps">
                         <DataGrid ItemsSource="{Binding SelectedTour.Route.Steps}" AutoGenerateColumns="False" IsReadOnly="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Distance" Binding="{Binding Distance}" />
+                                <DataGridTextColumn Header="Distance" Binding="{Binding Distance, StringFormat='0.##'}"/>
                                 <DataGridTextColumn Header="Description" Binding="{Binding Description}"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -99,7 +99,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat='d'}"/>
                         <DataGridTextColumn Header="Duration" Binding="{Binding Duration}"/>
-                        <DataGridTextColumn Header="Distance" Binding="{Binding Distance}"/>
+                        <DataGridTextColumn Header="Distance" Binding="{Binding Distance, StringFormat='0.##'}"/>
                         <DataGridTextColumn Header="Rating" Binding="{Binding Rating, StringFormat='P0'}"/>
                     </DataGrid.Columns>
                 </DataGrid>
