@@ -1,0 +1,63 @@
+CREATE ROLE tp_user WITH
+	LOGIN
+	NOSUPERUSER
+	NOCREATEDB
+	NOCREATEROLE
+	INHERIT
+	NOREPLICATION
+	CONNECTION LIMIT -1
+	PASSWORD 'xxxxxx';
+COMMENT ON ROLE tp_user IS 'TourPlanner user account';
+
+CREATE DATABASE tp
+    WITH 
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'German_Austria.1252'
+    LC_CTYPE = 'German_Austria.1252'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1;
+
+CREATE EXTENSION "uuid-ossp"
+    SCHEMA public
+    VERSION "1.1";
+
+CREATE TABLE public.tours
+(
+    tourid uuid NOT NULL,
+    name character varying(64) COLLATE pg_catalog."default" NOT NULL,
+    image character varying(260) COLLATE pg_catalog."default" NOT NULL,
+    description character varying(2048) COLLATE pg_catalog."default" NOT NULL,
+    start character varying(64) COLLATE pg_catalog."default" NOT NULL,
+    "end" character varying(64) COLLATE pg_catalog."default" NOT NULL,
+    routeid character varying(42) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT tours_pkey PRIMARY KEY (tourid)
+);
+
+CREATE TABLE public.steps
+(
+    tourid uuid NOT NULL,
+    distance double precision NOT NULL,
+    description character varying(250) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT steps_tourid_fkey FOREIGN KEY (tourid)
+        REFERENCES public.tours (tourid) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+        NOT VALID
+);
+
+CREATE TABLE public.log_entries
+(
+    logid uuid NOT NULL,
+    tourid uuid NOT NULL,
+    date date NOT NULL,
+    distance double precision NOT NULL,
+    duration interval NOT NULL,
+    rating real NOT NULL,
+    PRIMARY KEY (logid),
+    FOREIGN KEY (tourid)
+        REFERENCES public.tours (tourid) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+        NOT VALID
+);
