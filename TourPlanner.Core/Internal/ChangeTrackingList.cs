@@ -9,17 +9,18 @@ namespace TourPlanner.Core.Internal
 {
     internal class ChangeTrackingList<T> : IChangeTrackingList<T> where T : class, IChangeTracking
     {
+        private record ItemEntry<T> { public ChangeState State; public T Item; };
         private readonly object _syncRoot = new();
-        private readonly List<(ChangeState state, T item)> _items = new();
+        private readonly List<ItemEntry<T>> _items = new();
 
         private IEnumerable<T> CurrentItems
-            => _items.Where(i => i.state != ChangeState.Removed).Select(i => i.item);
+            => _items.Where(i => i.State != ChangeState.Removed).Select(i => i.Item);
 
         private int InternalIndexOf(T item)
         {
             for (int i = 0; i < _items.Count; ++i)
             {
-                if (Object.ReferenceEquals(_items[i].item, item))
+                if (Object.ReferenceEquals(_items[i].Item, item))
                     return i;
             }
 
@@ -33,7 +34,7 @@ namespace TourPlanner.Core.Internal
             do
             {
                 int temp = rem;
-                rem = _items.Skip(count).Take(rem).Count(i => i.state == ChangeState.Removed);
+                rem = _items.Skip(count).Take(rem).Count(i => i.State == ChangeState.Removed);
                 count += temp;
             } while (rem > 0);
 
@@ -44,7 +45,7 @@ namespace TourPlanner.Core.Internal
         { }
 
         public ChangeTrackingList(IList<T> initialItems)
-            => _items.AddRange(initialItems.Select(i => (ChangeState.Current, i)));
+            => _items.AddRange(initialItems.Select(i => new ItemEntry<T> { State = ChangeState.Current, Item = i }));
 
         public T this[int index]
         {
@@ -56,17 +57,17 @@ namespace TourPlanner.Core.Internal
             }
         }
 
-        public IReadOnlyCollection<T> NewItems => _items.Where(i => i.state == ChangeState.New).Select(i => i.item).ToArray();
+        public IReadOnlyCollection<T> NewItems => _items.Where(i => i.State == ChangeState.New).Select(i => i.Item).ToArray();
 
-        public IReadOnlyCollection<T> RemovedItems => _items.Where(i => i.state == ChangeState.Removed).Select(i => i.item).ToArray();
+        public IReadOnlyCollection<T> RemovedItems => _items.Where(i => i.State == ChangeState.Removed).Select(i => i.Item).ToArray();
 
-        public IReadOnlyCollection<T> ChangedItems => _items.Where(i => i.item.IsChanged).Select(i => i.item).ToArray();
+        public IReadOnlyCollection<T> ChangedItems => _items.Where(i => i.State == ChangeState.Current && i.Item.IsChanged).Select(i => i.Item).ToArray();
 
-        public int Count => _items.Count(i => i.state != ChangeState.Removed);
+        public int Count => _items.Count(i => i.State != ChangeState.Removed);
 
         public bool IsReadOnly => false;
 
-        public bool IsChanged => _items.Any(i => i.state != ChangeState.Current || i.item.IsChanged);
+        public bool IsChanged => _items.Any(i => i.State != ChangeState.Current || (i.State == ChangeState.Current && i.Item.IsChanged));
 
         bool IList.IsFixedSize => false;
 
@@ -88,17 +89,32 @@ namespace TourPlanner.Core.Internal
 
         public void AcceptChanges()
         {
-            var items = CurrentItems.Select(i => (ChangeState.Current, i)).ToArray();
+            var items = _items.Where(i => i.State != ChangeState.Removed).ToArray();
             _items.Clear();
             _items.AddRange(items);
-            _items.ForEach(i => i.item.AcceptChanges());
+            _items.ForEach(i => { i.State = ChangeState.Current; i.Item.AcceptChanges(); });
         }
 
         public void Add(T item)
-            => _items.Add((ChangeState.New, item));
+        {
+            if (_items.Find(i => i.Item == item) is var itemEntry and not null)
+            {
+                // undo removal
+                if (itemEntry.State == ChangeState.Removed)
+                {
+                    itemEntry.State = ChangeState.Current;
+                    return;
+                }
+
+                // double entry
+                throw new InvalidOperationException("This item has already been stored.");
+            }
+
+            _items.Add(new() { State = ChangeState.New, Item = item });
+        }
 
         public void Clear()
-            => _items.ForEach(i => i.state = ChangeState.Removed);
+            => _items.ForEach(i => i.State = ChangeState.Removed);
 
         public bool Contains(T item)
             => CurrentItems.Contains(item);
@@ -113,9 +129,9 @@ namespace TourPlanner.Core.Internal
         {
             for (int i = 0, pi = 0; i < _items.Count; ++i)
             {
-                if (_items[i].state != ChangeState.Removed)
+                if (_items[i].State != ChangeState.Removed)
                 {
-                    if (Object.ReferenceEquals(_items[i].item, item))
+                    if (Object.ReferenceEquals(_items[i].Item, item))
                         return pi;
 
                     ++pi;
@@ -128,24 +144,24 @@ namespace TourPlanner.Core.Internal
         public void Insert(int index, T item)
         {
             var internalIndex = PublicIndexToInternalIndex(index);
-            _items.Insert(internalIndex, (ChangeState.New, item));
+            _items.Insert(internalIndex, new() { State = ChangeState.New, Item = item });
         }
 
         public bool Remove(T item)
         {
             var internalIndex = InternalIndexOf(item);
 
-            if (internalIndex == -1 || _items[internalIndex].state == ChangeState.Removed)
+            if (internalIndex == -1 || _items[internalIndex].State == ChangeState.Removed)
                 return false;
 
             // if not yet accepted
-            if (_items[internalIndex].state == ChangeState.New)
+            if (_items[internalIndex].State == ChangeState.New)
             {
                 _items.RemoveAt(internalIndex);
                 return true;
             }
 
-            _items[internalIndex] = (ChangeState.Removed, _items[internalIndex].item);
+            _items[internalIndex].State = ChangeState.Removed;
             return true;
         }
 
@@ -157,13 +173,13 @@ namespace TourPlanner.Core.Internal
                 throw new ArgumentOutOfRangeException(nameof(index));
 
             // if not yet accepted
-            if (_items[internalIndex].state == ChangeState.New)
+            if (_items[internalIndex].State == ChangeState.New)
             {
                 _items.RemoveAt(internalIndex);
                 return;
             }
 
-            _items[internalIndex] = (ChangeState.Removed, _items[internalIndex].item);
+            _items[internalIndex].State = ChangeState.Removed;
         }
 
         IEnumerator IEnumerable.GetEnumerator()
