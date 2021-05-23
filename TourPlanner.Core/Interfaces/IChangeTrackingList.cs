@@ -7,5 +7,6 @@ namespace TourPlanner.Core.Interfaces
 {
     public interface IChangeTrackingList<T> : IList<T>, IList, IChangeTrackingCollection<T> where T : IChangeTracking
     {
+        new int Count { get; }
     }
 }
