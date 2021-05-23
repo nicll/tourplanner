@@ -39,6 +39,9 @@ namespace TourPlanner.Core.Internal
 
         public void Add(T item)
         {
+            if (_removedItems.Remove(item))
+                return;
+
             if (_newItems.Contains(item) || _currentItems.Contains(item))
                 throw new InvalidOperationException("This item has already been stored.");
 
