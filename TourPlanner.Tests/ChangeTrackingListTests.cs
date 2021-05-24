@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System;
+using System.Linq;
 using TourPlanner.Core.Internal;
 using TourPlanner.Core.Models;
 
@@ -226,6 +227,40 @@ namespace TourPlanner.Tests
             Assert.AreEqual(_item3, _list[1]);
             Assert.IsFalse(_list.Contains(_item1));
             Assert.IsFalse(_list.Contains(_item4));
+        }
+
+        [Test, Order(16)]
+        public void ReAddRemovedItemAndCheckPosition()
+        {
+            _list.Add(_item4);
+            _list.Add(_item1);
+
+            Assert.IsTrue(_list.IsChanged);
+            Assert.AreEqual(4, _list.Count);
+            Assert.AreEqual(3, _list.NewItems.Count);
+            Assert.AreEqual(1, _list.ChangedItems.Count);
+            Assert.AreEqual(0, _list.RemovedItems.Count);
+            Assert.AreEqual(_item1, _list[3]);
+            Assert.AreEqual(_item2, _list[0]);
+            Assert.AreEqual(_item3, _list[1]);
+            Assert.AreEqual(_item4, _list[2]);
+            Assert.IsTrue(_list.Contains(_item1));
+            Assert.IsTrue(_list.Contains(_item2));
+            Assert.IsTrue(_list.Contains(_item3));
+            Assert.IsTrue(_list.Contains(_item4));
+        }
+
+        [Test, Order(17)]
+        public void AcceptAllItems()
+        {
+            _list.AcceptChanges();
+
+            Assert.IsFalse(_list.IsChanged);
+            Assert.AreEqual(4, _list.Count);
+            Assert.AreEqual(0, _list.NewItems.Count);
+            Assert.AreEqual(0, _list.ChangedItems.Count);
+            Assert.AreEqual(0, _list.RemovedItems.Count);
+            Assert.IsTrue(_list.All(i => !i.IsChanged));
         }
     }
 }
