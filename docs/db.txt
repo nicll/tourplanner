@@ -39,6 +39,7 @@ CREATE TABLE public.steps
     tourid uuid NOT NULL,
     distance double precision NOT NULL,
     description character varying(250) COLLATE pg_catalog."default" NOT NULL,
+    icon character varying(260) COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT steps_tourid_fkey FOREIGN KEY (tourid)
         REFERENCES public.tours (tourid) MATCH SIMPLE
         ON UPDATE NO ACTION
