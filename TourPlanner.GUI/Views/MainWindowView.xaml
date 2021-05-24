@@ -68,7 +68,7 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel Grid.Row="1" Visibility="{Binding IsSearchBarVisible, Converter={StaticResource boolConverter}}">
-                    <CheckBox DockPanel.Dock="Right" Content="Include Description" IsChecked="{Binding IsIncludeDescriptionChecked}" Margin="4"/>
+                    <CheckBox DockPanel.Dock="Right" Content="Include description and notes" IsChecked="{Binding IsIncludeDescriptionChecked}" Margin="4"/>
                     <Button DockPanel.Dock="Right" Content="Clear" Command="{Binding ClearSearchTextCommand}"/>
                     <TextBox DockPanel.Dock="Left" MaxLength="64" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
                 </DockPanel>

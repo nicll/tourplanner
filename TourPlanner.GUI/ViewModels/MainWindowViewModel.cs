@@ -9,6 +9,7 @@ using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 using log4net;
 using System.Windows.Data;
+using System.Linq;
 
 namespace TourPlanner.GUI.ViewModels
 {
@@ -414,7 +415,7 @@ namespace TourPlanner.GUI.ViewModels
 
         private void UpdateShownTours()
         {
-            Func<Tour, bool> isContained = IsIncludeDescriptionChecked ? IsInNameOrDesc : IsInName;
+            Func<Tour, bool> isContained = IsIncludeDescriptionChecked ? IsInNameOrDescOrNotes : IsInName;
             App.Current.Dispatcher.Invoke(() => ShownTours.Clear());
 
             foreach (var tour in _dm.AllTours)
@@ -424,7 +425,10 @@ namespace TourPlanner.GUI.ViewModels
             }
 
             bool IsInName(Tour tour) => tour.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
-            bool IsInNameOrDesc(Tour tour) => IsInName(tour) || tour.CustomDescription.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+            bool IsInNameOrDescOrNotes(Tour tour)
+                => IsInName(tour)
+                || tour.CustomDescription.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                || tour.Log.Any(l => l.Notes.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
         }
 
         private async Task BusySection(Func<Task> section)
