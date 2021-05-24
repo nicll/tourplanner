@@ -99,10 +99,12 @@ namespace TourPlanner.Core.Internal
         {
             if (_items.Find(i => i.Item == item) is var itemEntry and not null)
             {
-                // undo removal
+                // undo removal and move to end
                 if (itemEntry.State == ChangeState.Removed)
                 {
                     itemEntry.State = ChangeState.Current;
+                    _items.Remove(itemEntry);
+                    _items.Add(itemEntry);
                     return;
                 }
 
@@ -147,7 +149,7 @@ namespace TourPlanner.Core.Internal
 
             if (_items.Find(i => i.Item == item) is var itemEntry and not null)
             {
-                // undo removal
+                // undo removal and move to new position
                 if (itemEntry.State == ChangeState.Removed)
                 {
                     itemEntry.State = ChangeState.Current;
