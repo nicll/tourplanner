@@ -144,6 +144,23 @@ namespace TourPlanner.Core.Internal
         public void Insert(int index, T item)
         {
             var internalIndex = PublicIndexToInternalIndex(index);
+
+            if (_items.Find(i => i.Item == item) is var itemEntry and not null)
+            {
+                // undo removal
+                if (itemEntry.State == ChangeState.Removed)
+                {
+                    itemEntry.State = ChangeState.Current;
+                    var oldIndex = _items.IndexOf(itemEntry);
+                    _items.Remove(itemEntry);
+                    _items.Insert(internalIndex > oldIndex ? internalIndex - 1 : internalIndex, itemEntry);
+                    return;
+                }
+
+                // double entry
+                throw new InvalidOperationException("This item has already been stored.");
+            }
+
             _items.Insert(internalIndex, new() { State = ChangeState.New, Item = item });
         }
 
