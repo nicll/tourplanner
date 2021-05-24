@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using TourPlanner.Core.Internal;
 
 namespace TourPlanner.Core.Models
@@ -14,6 +15,7 @@ namespace TourPlanner.Core.Models
         private double _distance;
         private TimeSpan _duration;
         private float _rating;
+        private string _notes;
 
         /// <summary>
         /// A unique ID for identifying the log entry.
@@ -54,6 +56,16 @@ namespace TourPlanner.Core.Models
         {
             get => _rating;
             set => _tracker.SetProperty(ref _rating, value);
+        }
+
+        /// <summary>
+        /// The user's notes on this tour.
+        /// </summary>
+        [MaxLength(2048)]
+        public string Notes
+        {
+            get => _notes ?? String.Empty;
+            set => _tracker.SetProperty(ref _notes, value);
         }
 
         public bool IsChanged => _tracker.IsChanged;
