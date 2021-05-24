@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TourPlanner.GUI.Views"
              xmlns:vm="clr-namespace:TourPlanner.GUI.ViewModels"
+             xmlns:conv="clr-namespace:TourPlanner.GUI"
              xmlns:aext="clr-namespace:AdonisUI.Extensions;assembly=AdonisUI"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:DesignMainWindowViewModel, IsDesignTimeCreatable=True}"
@@ -12,6 +13,10 @@
     <UserControl.DataContext>
         <vm:MainWindowViewModelInit/>
     </UserControl.DataContext>
+    <UserControl.Resources>
+        <conv:NotNullConverter x:Key="notNullConverter"/>
+        <conv:RelativeToFullPathConverter x:Key="pathConverter"/>
+    </UserControl.Resources>
     <Grid>
         <Grid Grid.Column="2">
             <Grid.RowDefinitions>
@@ -29,7 +34,7 @@
 
                 <DockPanel Grid.Row="0">
                     <Label DockPanel.Dock="Left" Padding="4" Content="Name:"/>
-                    <TextBox Margin="2" Text="{Binding SelectedTour.Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="64"/>
+                    <TextBox Margin="2" Text="{Binding SelectedTour.Name, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SelectedTour, Converter={StaticResource notNullConverter}}" MaxLength="64"/>
                 </DockPanel>
                 <TabControl Grid.Row="1">
                     <TabItem Header="General Information">
@@ -62,15 +67,23 @@
                                       aext:ScrollViewerExtension.VerticalScrollBarPlacement="Overlay"
                                       aext:ScrollViewerExtension.HorizontalScrollBarExpansionMode="NeverExpand"
                                       aext:ScrollViewerExtension.HorizontalScrollBarPlacement="Overlay">
-                            <Image Source="{Binding SelectedTour.ImagePath}" Stretch="UniformToFill"/>
+                            <Image Source="{Binding SelectedTour.ImagePath, Converter={StaticResource pathConverter}}" Stretch="UniformToFill"/>
                         </ScrollViewer>
                     </TabItem>
                     <TabItem Header="Description">
-                        <TextBox Text="{Binding SelectedTour.CustomDescription, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" MaxLength="2048"/>
+                        <TextBox Text="{Binding SelectedTour.CustomDescription, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SelectedTour, Converter={StaticResource notNullConverter}}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" MaxLength="2048"/>
                     </TabItem>
                     <TabItem Header="Steps">
                         <DataGrid ItemsSource="{Binding SelectedTour.Route.Steps}" AutoGenerateColumns="False" IsReadOnly="True">
                             <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Icon">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Image Source="{Binding IconPath}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Distance" Binding="{Binding Distance, StringFormat='0.##'}"/>
                                 <DataGridTextColumn Header="Description" Binding="{Binding Description}"/>
                             </DataGrid.Columns>
@@ -84,8 +97,8 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <DockPanel Grid.Row="0" Margin="2">
-                    <Button DockPanel.Dock="Right" Padding="4" Content="Delete" Command="{Binding DeleteTourLogCommand}"/>
-                    <Button DockPanel.Dock="Right" Padding="4" Content="Add" Command="{Binding AddTourLogCommand}"/>
+                    <Button DockPanel.Dock="Right" Padding="4" Content="Delete" Command="{Binding DeleteTourLogCommand}" IsEnabled="{Binding SelectedTourLog, Converter={StaticResource notNullConverter}}"/>
+                    <Button DockPanel.Dock="Right" Padding="4" Content="Add" Command="{Binding AddTourLogCommand}" IsEnabled="{Binding SelectedTourLog, Converter={StaticResource notNullConverter}}"/>
                     <Label DockPanel.Dock="Left" Padding="4" Content="Logs:"/>
                 </DockPanel>
                 <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedTourLog}" SelectedItem="{Binding SelectedTourLogEntry, Mode=TwoWay}"
