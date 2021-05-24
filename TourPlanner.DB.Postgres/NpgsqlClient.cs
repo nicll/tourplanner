@@ -46,7 +46,7 @@ namespace TourPlanner.DB.Postgres
                 }
             }
 
-            using (var cmd = new NpgsqlCommand("SELECT tourid, distance, description FROM steps", conn))
+            using (var cmd = new NpgsqlCommand("SELECT tourid, distance, description, icon FROM steps", conn))
             {
                 using var reader = await cmd.ExecuteReaderAsync();
 
@@ -60,7 +60,8 @@ namespace TourPlanner.DB.Postgres
                     tour.Steps.Add(new()
                     {
                         Distance = reader.GetDouble(1),
-                        Description = reader.GetString(2)
+                        Description = reader.GetString(2),
+                        IconPath = reader.GetString(3)
                     });
                 }
             }
@@ -141,8 +142,8 @@ namespace TourPlanner.DB.Postgres
 
             using (var cmd = new NpgsqlCommand("INSERT INTO steps VALUES ", conn, trans))
             {
-                cmd.CommandText += ManyDataToNpgsqlCommand<Tour, IEnumerable<(Guid, double, string)>, (Guid, double, string)>
-                    (cmd, tours, t => t.Route.Steps.Select(s => (t.TourId, s.Distance, s.Description)), x => x.Item1, x => x.Item2, x => x.Item3);
+                cmd.CommandText += ManyDataToNpgsqlCommand<Tour, IEnumerable<(Guid, double, string, string)>, (Guid, double, string, string)>
+                    (cmd, tours, t => t.Route.Steps.Select(s => (t.TourId, s.Distance, s.Description, s.IconPath)), x => x.Item1, x => x.Item2, x => x.Item3, x => x.Item4);
 
                 await cmd.ExecuteNonQueryAsync();
             }
