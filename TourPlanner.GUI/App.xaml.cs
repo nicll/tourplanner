@@ -12,6 +12,7 @@ namespace TourPlanner.GUI
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
             FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
                 new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
         }
