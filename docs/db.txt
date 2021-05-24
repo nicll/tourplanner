@@ -54,10 +54,10 @@ CREATE TABLE public.log_entries
     distance double precision NOT NULL,
     duration interval NOT NULL,
     rating real NOT NULL,
-    PRIMARY KEY (logid),
-    FOREIGN KEY (tourid)
+    note character varying(2048) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT log_entries_pkey PRIMARY KEY (logid),
+    CONSTRAINT log_entries_tourid_fkey FOREIGN KEY (tourid)
         REFERENCES public.tours (tourid) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE CASCADE
-        NOT VALID
 );
