@@ -8,7 +8,7 @@ namespace TourPlanner.Tests
     public class ChangeTrackingListTests
     {
         private ChangeTrackingList<Tour> _list;
-        private Tour _item1, _item2, _item3;
+        private Tour _item1, _item2, _item3, _item4;
 
         [OneTimeSetUp]
         public void Setup()
@@ -17,6 +17,7 @@ namespace TourPlanner.Tests
             _item1 = new Tour();
             _item2 = new Tour();
             _item3 = new Tour();
+            _item4 = new Tour();
         }
 
         [Test, Order(1)]
@@ -142,6 +143,89 @@ namespace TourPlanner.Tests
             Assert.AreEqual(0, _list.NewItems.Count);
             Assert.AreEqual(0, _list.ChangedItems.Count);
             Assert.AreEqual(1, _list.RemovedItems.Count);
+        }
+
+        [Test, Order(11)]
+        public void InsertAtFirstPositionWhenEmpty()
+        {
+            _list.Insert(0, _item2);
+
+            Assert.IsTrue(_list.IsChanged);
+            Assert.AreEqual(1, _list.Count);
+            Assert.AreEqual(1, _list.NewItems.Count);
+            Assert.AreEqual(0, _list.ChangedItems.Count);
+            Assert.AreEqual(1, _list.RemovedItems.Count);
+            Assert.AreEqual(_item2, _list[0]);
+        }
+
+        [Test, Order(12)]
+        public void InsertAtLastPosition()
+        {
+            _list.Insert(1, _item3);
+
+            Assert.IsTrue(_list.IsChanged);
+            Assert.AreEqual(2, _list.Count);
+            Assert.AreEqual(2, _list.NewItems.Count);
+            Assert.AreEqual(0, _list.ChangedItems.Count);
+            Assert.AreEqual(1, _list.RemovedItems.Count);
+            Assert.AreEqual(_item2, _list[0]);
+            Assert.AreEqual(_item3, _list[1]);
+        }
+
+        [Test, Order(13)]
+        public void InsertAtFirstPosition()
+        {
+            _list.Insert(0, _item4);
+
+            Assert.IsTrue(_list.IsChanged);
+            Assert.AreEqual(3, _list.Count);
+            Assert.AreEqual(3, _list.NewItems.Count);
+            Assert.AreEqual(0, _list.ChangedItems.Count);
+            Assert.AreEqual(1, _list.RemovedItems.Count);
+            Assert.AreEqual(_item2, _list[1]);
+            Assert.AreEqual(_item3, _list[2]);
+            Assert.AreEqual(_item4, _list[0]);
+            Assert.IsFalse(_list.Contains(_item1));
+            Assert.IsTrue(_list.Contains(_item2));
+            Assert.IsTrue(_list.Contains(_item3));
+            Assert.IsTrue(_list.Contains(_item4));
+        }
+
+        [Test, Order(14)]
+        public void InsertRemovedItems()
+        {
+            // before: i4, i2, i3; (i1)
+            _list.Remove(_item2);
+            _list.Insert(1, _item1);
+            _list.Insert(0, _item2);
+            // after: i2, i4, i1, i3
+
+            Assert.IsTrue(_list.IsChanged);
+            Assert.AreEqual(4, _list.Count);
+            Assert.AreEqual(3, _list.NewItems.Count);
+            Assert.AreEqual(1, _list.ChangedItems.Count);
+            Assert.AreEqual(0, _list.RemovedItems.Count);
+            Assert.AreEqual(_item1, _list[2]);
+            Assert.AreEqual(_item2, _list[0]);
+            Assert.AreEqual(_item3, _list[3]);
+            Assert.AreEqual(_item4, _list[1]);
+        }
+
+        [Test, Order(15)]
+        public void RemoveItemsAtLocations()
+        {
+            _list.RemoveAt(1);
+            _list.RemoveAt(1);
+
+            Assert.IsTrue(_list.IsChanged);
+            Assert.AreEqual(2, _list.Count);
+            Assert.AreEqual(2, _list.NewItems.Count);
+            Assert.AreEqual(0, _list.ChangedItems.Count);
+            Assert.AreEqual(1, _list.RemovedItems.Count);
+            Assert.AreEqual(_item2, _list[0]);
+            Assert.AreEqual(_item3, _list[1]);
+            Assert.IsFalse(_list.Contains(_item1));
+            Assert.IsFalse(_list.Contains(_item4));
         }
     }
 }
