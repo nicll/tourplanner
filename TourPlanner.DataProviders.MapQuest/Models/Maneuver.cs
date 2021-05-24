@@ -9,11 +9,14 @@ namespace TourPlanner.DataProviders.MapQuest.Models
 
         public readonly string Narrative;
 
+        public readonly string IconUrl;
+
         [JsonConstructor]
-        public Maneuver(double distance, string narrative)
+        public Maneuver(double distance, string narrative, string iconUrl)
         {
             Distance = distance;
             Narrative = narrative;
+            IconUrl = iconUrl;
         }
     }
 }

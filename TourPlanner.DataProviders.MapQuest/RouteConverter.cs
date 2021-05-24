@@ -19,7 +19,7 @@ namespace TourPlanner.DataProviders.MapQuest
         }
 
         private static IReadOnlyList<Step> ManeuversToSteps(IList<Maneuver> maneuvers)
-            => maneuvers.Select(m => new Step { Distance = m.Distance, Description = m.Narrative }).ToList().AsReadOnly();
+            => maneuvers.Select(m => new Step { Distance = m.Distance, Description = m.Narrative, IconPath = m.IconUrl }).ToList().AsReadOnly();
 
         public override void Write(Utf8JsonWriter writer, CoreRoute value, JsonSerializerOptions options)
         {
@@ -28,6 +28,6 @@ namespace TourPlanner.DataProviders.MapQuest
         }
 
         private static List<Maneuver> StepsToManeuvers(IReadOnlyList<Step> steps)
-            => steps.Select(s => new Maneuver(s.Distance, s.Description)).ToList();
+            => steps.Select(s => new Maneuver(s.Distance, s.Description, s.IconPath)).ToList();
     }
 }

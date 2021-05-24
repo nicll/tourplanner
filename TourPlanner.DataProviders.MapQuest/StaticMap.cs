@@ -12,17 +12,15 @@ namespace TourPlanner.DataProviders.MapQuest
     internal class StaticMap : MapQuestAPI, IMapImageProvider
     {
         private const string ImageRequestFormat = "https://www.mapquestapi.com/staticmap/v5/map?key={0}&session={1}&size=1280,720&format=png";
-        private const string RelativeImageContainerPath = @".\TourPlanner_CachedImages\";
 
         internal StaticMap(string apiKey, TimeSpan timeout, HttpClient client) : base(apiKey, timeout, client)
-        {
-        }
+        { }
 
         public async ValueTask<string> GetImage(Route route)
         {
             EnsureDirectoryExists(RelativeImageContainerPath);
 
-            var imagePath = GetAbsoluteRouteImagePath(route);
+            var imagePath = GetRelativeRouteImagePath(route);
 
             if (!File.Exists(imagePath))
                 await DownloadImage(route).ConfigureAwait(false);
@@ -50,7 +48,7 @@ namespace TourPlanner.DataProviders.MapQuest
         private async Task DownloadImage(Route route)
         {
             _log.Debug("Requesting image for route from API: RouteId=\"" + route.RouteId + "\"");
-            var imagePath = GetAbsoluteRouteImagePath(route);
+            var imagePath = GetRelativeRouteImagePath(route);
             _log.Debug("Image will be saved to: " + imagePath);
 
             using var cts = new CancellationTokenSource(_timeout);
@@ -70,8 +68,8 @@ namespace TourPlanner.DataProviders.MapQuest
             return route.RouteId + ".png";
         }
 
-        private static string GetAbsoluteRouteImagePath(Route route)
-            => Path.GetFullPath(RelativeImageContainerPath + GetRouteImageFilename(route));
+        private static string GetRelativeRouteImagePath(Route route)
+            => RelativeImageContainerPath + GetRouteImageFilename(route);
 
         private static void EnsureDirectoryExists(string path)
         {
