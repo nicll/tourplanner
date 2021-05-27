@@ -8,11 +8,11 @@ using TourPlanner.Core.Models;
 
 namespace TourPlanner.Reporting.PDF
 {
-    internal class SummaryReport : IDocument
+    internal class SummaryReportDocument : IDocument
     {
         private readonly ICollection<Tour> _toursModel;
 
-        public SummaryReport(ICollection<Tour> toursModel)
+        public SummaryReportDocument(ICollection<Tour> toursModel)
             => _toursModel = toursModel;
 
         public DocumentMetadata GetMetadata()
@@ -73,7 +73,7 @@ namespace TourPlanner.Reporting.PDF
                         {
                             row.RelativeColumn(4).AlignLeft().Text(tour.Name);
                             row.RelativeColumn(1).AlignRight().Text(tour.Route.Steps.Count);
-                            row.RelativeColumn(1).AlignRight().Text(tour.Route.TotalDistance);
+                            row.RelativeColumn(1).AlignRight().Text(ReportGenerator.DistanceToString(tour.Route.TotalDistance));
                         });
                     }
                 });
@@ -97,7 +97,7 @@ namespace TourPlanner.Reporting.PDF
                 stack.Element().Text("Total number of steps: " + _toursModel.Sum(t => t.Route.Steps.Count));
                 stack.Element().Text("Shortest tour: " + _toursModel.Aggregate((min, t) => min.Route.TotalDistance < t.Route.TotalDistance ? min : t).Name);
                 stack.Element().Text("Longest tour: " + _toursModel.Aggregate((max, t) => max.Route.TotalDistance > t.Route.TotalDistance ? max : t).Name);
-                stack.Element().Text("Summed total distance: " + _toursModel.Sum(t => t.Route.TotalDistance).ToString("0.00"));
+                stack.Element().Text("Summed total distance: " + ReportGenerator.DistanceToString(_toursModel.Sum(t => t.Route.TotalDistance)));
             });
         }
 

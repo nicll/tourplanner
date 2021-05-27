@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Threading.Tasks;
 using QuestPDF.Drawing;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
@@ -9,9 +11,13 @@ namespace TourPlanner.Reporting.PDF
     internal class TourReportDocument : IDocument
     {
         private readonly Tour _tourModel;
+        private byte[] _imageData;
 
         public TourReportDocument(Tour tourModel)
             => _tourModel = tourModel;
+
+        public async Task LoadImage()
+            => _imageData = await File.ReadAllBytesAsync(_tourModel.ImagePath).ConfigureAwait(false);
 
         public DocumentMetadata GetMetadata()
             => new() { Title = "TourPlanner - Tour Report", PdfA = true };
@@ -37,10 +43,10 @@ namespace TourPlanner.Reporting.PDF
                     stack.Element().Text(_tourModel.Name, TextStyle.Default.Size(20));
                     stack.Element().Text("TourId: " + _tourModel.TourId);
                     stack.Element().Text("RouteId: " + _tourModel.Route.RouteId);
-                    stack.Element().Text("Distance in km: " + _tourModel.Route.TotalDistance);
+                    stack.Element().Text("Total distance: " + ReportGenerator.DistanceToString(_tourModel.Route.TotalDistance));
                 });
 
-                row.ConstantColumn(100).Height(50).Placeholder();
+                row.ConstantColumn(160).Height(80).Image(_imageData, ImageScaling.FitArea);
             });
         }
 
@@ -86,15 +92,11 @@ namespace TourPlanner.Reporting.PDF
                         {
                             row.ConstantColumn(25).Text(i + 1);
                             row.RelativeColumn(3).AlignLeft().Text(_tourModel.Route.Steps[i].Description);
-                            row.RelativeColumn(1).AlignRight().Text(_tourModel.Route.Steps[i].Distance);
+                            row.RelativeColumn(1).AlignRight().Text(ReportGenerator.DistanceToString(_tourModel.Route.Steps[i].Distance));
                         });
                     }
 
-                    var distanceText = _tourModel.Route.TotalDistance < 1
-                        ? (_tourModel.Route.TotalDistance * 1000).ToString("0") + " m"
-                        : _tourModel.Route.TotalDistance.ToString("0.00") + " km";
-
-                    stack.Element().Padding(5).AlignRight().Text("Total distance: " + distanceText, TextStyle.Default.Size(16));
+                    stack.Element().Padding(5).AlignRight().Text("Total distance: " + ReportGenerator.DistanceToString(_tourModel.Route.TotalDistance), TextStyle.Default.Size(16));
                 });
             });
         }
