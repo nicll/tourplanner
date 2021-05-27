@@ -3,7 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Windows.Data;
 
-namespace TourPlanner.GUI
+namespace TourPlanner.GUI.Converters
 {
     public class RelativeToFullPathConverter : IValueConverter
     {

@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace TourPlanner.GUI
+namespace TourPlanner.GUI.Converters
 {
     public class NotNullConverter : IValueConverter
     {

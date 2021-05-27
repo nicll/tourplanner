@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TourPlanner.GUI.Views"
              xmlns:vm="clr-namespace:TourPlanner.GUI.ViewModels"
-             xmlns:conv="clr-namespace:TourPlanner.GUI"
+             xmlns:conv="clr-namespace:TourPlanner.GUI.Converters"
              xmlns:aext="clr-namespace:AdonisUI.Extensions;assembly=AdonisUI"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:DesignMainWindowViewModel, IsDesignTimeCreatable=True}"
@@ -97,7 +97,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <DockPanel Grid.Row="0" Margin="2">
-                    <Button DockPanel.Dock="Right" Padding="4" Content="Delete" Command="{Binding DeleteTourLogCommand}" IsEnabled="{Binding SelectedTourLog, Converter={StaticResource notNullConverter}}"/>
+                    <Button DockPanel.Dock="Right" Padding="4" Content="Delete" Command="{Binding DeleteTourLogCommand}" IsEnabled="{Binding SelectedTourLogEntry, Converter={StaticResource notNullConverter}}"/>
                     <Button DockPanel.Dock="Right" Padding="4" Content="Add" Command="{Binding AddTourLogCommand}" IsEnabled="{Binding SelectedTourLog, Converter={StaticResource notNullConverter}}"/>
                     <Label DockPanel.Dock="Left" Padding="4" Content="Logs:"/>
                 </DockPanel>

@@ -5,6 +5,7 @@
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                    xmlns:local="clr-namespace:TourPlanner.GUI.Views"
                    xmlns:vm="clr-namespace:TourPlanner.GUI.ViewModels"
+                   xmlns:conv="clr-namespace:TourPlanner.GUI.Converters"
                    xmlns:aui="clr-namespace:AdonisUI;assembly=AdonisUI"
                    xmlns:actl="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
                    xmlns:aext="clr-namespace:AdonisUI.Extensions;assembly=AdonisUI"
@@ -16,6 +17,7 @@
     </Window.Style>
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="boolConverter"/>
+        <conv:NotNullConverter x:Key="notNullConverter"/>
     </Window.Resources>
     <Window.InputBindings>
         <KeyBinding Gesture="Ctrl+S" Command="{Binding SynchronizeCommand}"/>
@@ -40,11 +42,11 @@
                 <MenuItem Header="_Edit">
                     <MenuItem Header="_Tour">
                         <MenuItem Header="_Add Tour" Command="{Binding AddTourCommand}"/>
-                        <MenuItem Header="_Delete Tour" Command="{Binding DeleteTourCommand}"/>
+                        <MenuItem Header="_Delete Tour" Command="{Binding DeleteTourCommand}" IsEnabled="{Binding SelectedTour, Converter={StaticResource notNullConverter}}"/>
                     </MenuItem>
                     <MenuItem Header="Tour _Logs">
                         <MenuItem Header="_Add Tour Log Entry" Command="{Binding AddTourLogCommand}"/>
-                        <MenuItem Header="_Delete Tour Log Entry" Command="{Binding DeleteTourLogCommand}"/>
+                        <MenuItem Header="_Delete Tour Log Entry" Command="{Binding DeleteTourLogCommand}" IsEnabled="{Binding SelectedTourLogEntry, Converter={StaticResource notNullConverter}}"/>
                     </MenuItem>
                 </MenuItem>
                 <MenuItem Header="_Data Migration">
@@ -53,7 +55,7 @@
                 </MenuItem>
                 <MenuItem Header="_Reports">
                     <MenuItem Header="_Summary Report" Command="{Binding GenerateSummaryReportCommand}"/>
-                    <MenuItem Header="_Tour Report" Command="{Binding GenerateTourReportCommand}"/>
+                    <MenuItem Header="_Tour Report" Command="{Binding GenerateTourReportCommand}" IsEnabled="{Binding SelectedTour, Converter={StaticResource notNullConverter}}"/>
                 </MenuItem>
                 <MenuItem Header="_Help">
                     <MenuItem Header="About"/>
