@@ -5,7 +5,7 @@ using System.Windows.Data;
 
 namespace TourPlanner.GUI.Converters
 {
-    public class RelativeToFullPathConverter : IValueConverter
+    internal class RelativeToFullPathConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
             => Path.GetFullPath(value as string ?? throw new ArgumentException("Value is not a string.", nameof(value)));
