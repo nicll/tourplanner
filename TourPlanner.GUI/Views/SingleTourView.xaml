@@ -114,6 +114,8 @@
                         <DataGridTextColumn Header="Duration" Binding="{Binding Duration}"/>
                         <DataGridTextColumn Header="Distance" Binding="{Binding Distance, StringFormat='0.##'}"/>
                         <DataGridTextColumn Header="Rating" Binding="{Binding Rating, StringFormat='P0'}"/>
+                        <DataGridTextColumn Header="Participant count" Binding="{Binding ParticipantCount}"/>
+                        <DataGridTextColumn Header="Vehicle" Binding="{Binding Vehicle}"/>
                         <DataGridTextColumn Header="Notes" Binding="{Binding Notes}"/>
                     </DataGrid.Columns>
                 </DataGrid>
