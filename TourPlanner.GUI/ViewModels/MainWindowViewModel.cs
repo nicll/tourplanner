@@ -309,7 +309,7 @@ namespace TourPlanner.GUI.ViewModels
             if (IsBusy || SelectedTour is null)
                 return;
 
-            var newEntry = new LogEntry { LogId = Guid.NewGuid() };
+            var newEntry = new LogEntry { LogId = Guid.NewGuid(), Date = DateTime.Today, ParticipantCount = 1 };
             SelectedTourLog.AddNewItem(newEntry);
             SelectedTourLog.CommitNew();
             SelectedTourLogEntry = newEntry;
