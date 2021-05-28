@@ -66,7 +66,7 @@ namespace TourPlanner.DB.Postgres
                 }
             }
 
-            using (var cmd = new NpgsqlCommand("SELECT logid, tourid, date, distance, duration, rating, notes FROM log_entries", conn))
+            using (var cmd = new NpgsqlCommand("SELECT logid, tourid, date, distance, duration, rating, notes, vehicle, participants FROM log_entries", conn))
             {
                 using var reader = await cmd.ExecuteReaderAsync();
 
@@ -84,7 +84,9 @@ namespace TourPlanner.DB.Postgres
                         Distance = reader.GetDouble(3),
                         Duration = reader.GetTimeSpan(4),
                         Rating = reader.GetFloat(5),
-                        Notes = reader.GetString(6)
+                        Notes = reader.GetString(6),
+                        Vehicle = reader.GetString(7),
+                        ParticipantCount = reader.GetInt32(8)
                     });
                 }
             }
@@ -154,8 +156,8 @@ namespace TourPlanner.DB.Postgres
 
             using (var cmd = new NpgsqlCommand("INSERT INTO log_entries VALUES ", conn, trans))
             {
-                cmd.CommandText += ManyDataToNpgsqlCommand<Tour, IEnumerable<(Guid, Guid, DateTime, double, TimeSpan, float, string)>, (Guid, Guid, DateTime, double, TimeSpan, float, string)>
-                    (cmd, tours, t => t.Log.Select(l => (l.LogId, t.TourId, l.Date, l.Distance, l.Duration, l.Rating, l.Notes)), x => x.Item1, x => x.Item2, x => x.Item3, x => x.Item4, x => x.Item5, x => x.Item6, x => x.Item7);
+                cmd.CommandText += ManyDataToNpgsqlCommand<Tour, IEnumerable<(Guid, Guid, DateTime, double, TimeSpan, float, string, string, int)>, (Guid, Guid, DateTime, double, TimeSpan, float, string, string, int)>
+                    (cmd, tours, t => t.Log.Select(l => (l.LogId, t.TourId, l.Date, l.Distance, l.Duration, l.Rating, l.Notes, l.Vehicle, l.ParticipantCount)), x => x.Item1, x => x.Item2, x => x.Item3, x => x.Item4, x => x.Item5, x => x.Item6, x => x.Item7, x => x.Item8, x => x.Item9);
 
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -214,7 +216,7 @@ namespace TourPlanner.DB.Postgres
                 return;
 
             using var cmd = new NpgsqlCommand("INSERT INTO log_entries VALUES ", conn, trans);
-            cmd.CommandText += DataToNpgsqlCommand(cmd, log, l => l.LogId, _ => tourId, l => l.Date, l => l.Distance, l => l.Duration, l => l.Rating, l => l.Notes);
+            cmd.CommandText += DataToNpgsqlCommand(cmd, log, l => l.LogId, _ => tourId, l => l.Date, l => l.Distance, l => l.Duration, l => l.Rating, l => l.Notes, l => l.Vehicle, l => l.ParticipantCount);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -238,12 +240,14 @@ namespace TourPlanner.DB.Postgres
             if (!log.Any())
                 return;
 
-            using var cmd = new NpgsqlCommand("UPDATE log_entries SET date = @date, distance = @dist, duration = @drtn, rating = @rtng, notes = @note WHERE logid = @lid", conn, trans);
+            using var cmd = new NpgsqlCommand("UPDATE log_entries SET date = @date, distance = @dist, duration = @drtn, rating = @rtng, notes = @note, vehicle = @vhcl, participants = @ptcp WHERE logid = @lid", conn, trans);
             cmd.Parameters.Add("@date", NpgsqlTypes.NpgsqlDbType.Date);
             cmd.Parameters.Add("@dist", NpgsqlTypes.NpgsqlDbType.Double);
             cmd.Parameters.Add("@drtn", NpgsqlTypes.NpgsqlDbType.Interval);
             cmd.Parameters.Add("@rtng", NpgsqlTypes.NpgsqlDbType.Real);
             cmd.Parameters.Add("@note", NpgsqlTypes.NpgsqlDbType.Varchar);
+            cmd.Parameters.Add("@vhcl", NpgsqlTypes.NpgsqlDbType.Varchar);
+            cmd.Parameters.Add("@ptcp", NpgsqlTypes.NpgsqlDbType.Integer);
             cmd.Parameters.Add("@lid", NpgsqlTypes.NpgsqlDbType.Uuid);
 
             foreach (var entry in log)
@@ -253,6 +257,8 @@ namespace TourPlanner.DB.Postgres
                 cmd.Parameters["@drtn"].Value = entry.Duration;
                 cmd.Parameters["@rtng"].Value = entry.Rating;
                 cmd.Parameters["@note"].Value = entry.Notes;
+                cmd.Parameters["@vhcl"].Value = entry.Vehicle;
+                cmd.Parameters["@ptcp"].Value = entry.ParticipantCount;
                 cmd.Parameters["@lid"].Value = entry.LogId;
                 await cmd.ExecuteNonQueryAsync();
             }
