@@ -24,9 +24,9 @@ namespace TourPlanner.Reporting.PDF
                 .Padding(50)
                 .Page(page =>
                 {
-                    page.Header(ComposeHeader);
-                    page.Content(ComposeContent);
-                    page.Footer(ComposeFooter);
+                    page.Header().Element(ComposeHeader);
+                    page.Content().Element(ComposeContent);
+                    page.Footer().Element(ComposeFooter);
                 });
         }
 
@@ -36,8 +36,8 @@ namespace TourPlanner.Reporting.PDF
             {
                 row.RelativeColumn().Stack(stack =>
                 {
-                    stack.Element().Text("Summary of All Tours", TextStyle.Default.Size(20));
-                    stack.Element().Text("Listing " + _toursModel.Count + " tours.");
+                    stack.Item().Text("Summary of All Tours", TextStyle.Default.Size(20));
+                    stack.Item().Text("Listing " + _toursModel.Count + " tours.");
                 });
 
                 row.ConstantColumn(100).Height(50).Placeholder();
@@ -46,30 +46,30 @@ namespace TourPlanner.Reporting.PDF
 
         private void ComposeContent(IContainer container)
         {
-            container.PaddingVertical(40).PageableStack(stack =>
+            container.PaddingVertical(40).Stack(stack =>
             {
                 stack.Spacing(5);
-                stack.Element(ComposeListing);
-                stack.Element(ComposeTotals);
+                stack.Item().Element(ComposeListing);
+                stack.Item().Element(ComposeTotals);
             });
         }
 
         private void ComposeListing(IContainer container)
         {
-            container.PaddingVertical(10).Section(section =>
+            container.PaddingVertical(10).Decoration(decoration =>
             {
-                section.Header().BorderBottom(1).Padding(5).Row(row =>
+                decoration.Header().BorderBottom(1).Padding(5).Row(row =>
                 {
                     row.RelativeColumn(4).AlignLeft().Text("Name");
                     row.RelativeColumn(1).AlignRight().Text("Steps");
                     row.RelativeColumn(1).AlignRight().Text("Total Distance");
                 });
 
-                section.Content().PageableStack(stack =>
+                decoration.Content().Stack(stack =>
                 {
                     foreach (var tour in _toursModel)
                     {
-                        stack.Element().BorderBottom(1).BorderColor("CCC").Padding(5).Row(row =>
+                        stack.Item().BorderBottom(1).BorderColor("CCC").Padding(5).Row(row =>
                         {
                             row.RelativeColumn(4).AlignLeft().Text(tour.Name);
                             row.RelativeColumn(1).AlignRight().Text(tour.Route.Steps.Count);
@@ -85,19 +85,19 @@ namespace TourPlanner.Reporting.PDF
             container.Background("EEE").Padding(10).Stack(stack =>
             {
                 stack.Spacing(5);
-                stack.Element().Text("Statistical Summary", TextStyle.Default.Size(14));
+                stack.Item().Text("Statistical Summary", TextStyle.Default.Size(14));
 
                 if (!_toursModel.Any())
                 {
-                    stack.Element().Text("No tours available.");
+                    stack.Item().Text("No tours available.");
                     return;
                 }
 
-                stack.Element().Text("Mean number of steps: " + _toursModel.Average(t => t.Route.Steps.Count).ToString("0"));
-                stack.Element().Text("Total number of steps: " + _toursModel.Sum(t => t.Route.Steps.Count));
-                stack.Element().Text("Shortest tour: " + _toursModel.Aggregate((min, t) => min.Route.TotalDistance < t.Route.TotalDistance ? min : t).Name);
-                stack.Element().Text("Longest tour: " + _toursModel.Aggregate((max, t) => max.Route.TotalDistance > t.Route.TotalDistance ? max : t).Name);
-                stack.Element().Text("Summed total distance: " + ReportGenerator.DistanceToString(_toursModel.Sum(t => t.Route.TotalDistance)));
+                stack.Item().Text("Mean number of steps: " + _toursModel.Average(t => t.Route.Steps.Count).ToString("0"));
+                stack.Item().Text("Total number of steps: " + _toursModel.Sum(t => t.Route.Steps.Count));
+                stack.Item().Text("Shortest tour: " + _toursModel.Aggregate((min, t) => min.Route.TotalDistance < t.Route.TotalDistance ? min : t).Name);
+                stack.Item().Text("Longest tour: " + _toursModel.Aggregate((max, t) => max.Route.TotalDistance > t.Route.TotalDistance ? max : t).Name);
+                stack.Item().Text("Summed total distance: " + ReportGenerator.DistanceToString(_toursModel.Sum(t => t.Route.TotalDistance)));
             });
         }
 

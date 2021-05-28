@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using QuestPDF.Drawing;
 using QuestPDF.Fluent;
@@ -28,9 +29,9 @@ namespace TourPlanner.Reporting.PDF
                 .Padding(50)
                 .Page(page =>
                 {
-                    page.Header(ComposeHeader);
-                    page.Content(ComposeContent);
-                    page.Footer(ComposeFooter);
+                    page.Header().Element(ComposeHeader);
+                    page.Content().Element(ComposeContent);
+                    page.Footer().Element(ComposeFooter);
                 });
         }
 
@@ -40,10 +41,10 @@ namespace TourPlanner.Reporting.PDF
             {
                 row.RelativeColumn().Stack(stack =>
                 {
-                    stack.Element().Text(_tourModel.Name, TextStyle.Default.Size(20));
-                    stack.Element().Text("TourId: " + _tourModel.TourId);
-                    stack.Element().Text("RouteId: " + _tourModel.Route.RouteId);
-                    stack.Element().Text("Total distance: " + ReportGenerator.DistanceToString(_tourModel.Route.TotalDistance));
+                    stack.Item().Text(_tourModel.Name, TextStyle.Default.Size(20));
+                    stack.Item().Text("TourId: " + _tourModel.TourId);
+                    stack.Item().Text("RouteId: " + _tourModel.Route.RouteId);
+                    stack.Item().Text("Total distance: " + ReportGenerator.DistanceToString(_tourModel.Route.TotalDistance));
                 });
 
                 row.ConstantColumn(160).Height(80).Image(_imageData, ImageScaling.FitArea);
@@ -52,11 +53,12 @@ namespace TourPlanner.Reporting.PDF
 
         private void ComposeContent(IContainer container)
         {
-            container.PaddingVertical(40).PageableStack(stack =>
+            container.PaddingVertical(40).Stack(stack =>
             {
                 stack.Spacing(5);
-                stack.Element(ComposeDescription);
-                stack.Element(ComposeSteps);
+                stack.Item().Element(ComposeDescription);
+                stack.Item().Element(ComposeSteps);
+                stack.Item().Element(ComposeLog);
             });
         }
 
@@ -68,27 +70,27 @@ namespace TourPlanner.Reporting.PDF
             container.Background("EEE").Padding(10).Stack(stack =>
             {
                 stack.Spacing(5);
-                stack.Element().Text("Description", TextStyle.Default.Size(16));
-                stack.Element().Text(_tourModel.CustomDescription);
+                stack.Item().Text("Description", TextStyle.Default.Size(16));
+                stack.Item().Text(_tourModel.CustomDescription);
             });
         }
 
         private void ComposeSteps(IContainer container)
         {
-            container.PaddingVertical(10).Section(section =>
+            container.PaddingVertical(10).Decoration(decoration =>
             {
-                section.Header().BorderBottom(1).Padding(5).Row(row =>
+                decoration.Header().BorderBottom(1).Padding(5).Row(row =>
                 {
                     row.ConstantColumn(25).Text("#");
                     row.RelativeColumn(3).AlignLeft().Text("Description");
                     row.RelativeColumn(1).AlignRight().Text("Distance");
                 });
 
-                section.Content().PageableStack(stack =>
+                decoration.Content().Stack(stack =>
                 {
                     for (int i = 0; i < _tourModel.Route.Steps.Count; ++i)
                     {
-                        stack.Element().BorderBottom(1).BorderColor("CCC").Padding(5).Row(row =>
+                        stack.Item().BorderBottom(1).BorderColor("CCC").Padding(5).Row(row =>
                         {
                             row.ConstantColumn(25).Text(i + 1);
                             row.RelativeColumn(3).AlignLeft().Text(_tourModel.Route.Steps[i].Description);
@@ -96,7 +98,47 @@ namespace TourPlanner.Reporting.PDF
                         });
                     }
 
-                    stack.Element().Padding(5).AlignRight().Text("Total distance: " + ReportGenerator.DistanceToString(_tourModel.Route.TotalDistance), TextStyle.Default.Size(16));
+                    stack.Item().Padding(5).AlignRight().Text("Total distance: " + ReportGenerator.DistanceToString(_tourModel.Route.TotalDistance), TextStyle.Default.Size(16));
+                });
+            });
+        }
+
+        private void ComposeLog(IContainer container)
+        {
+            if (!_tourModel.Log.Any())
+                return;
+
+            container.PaddingVertical(10).Decoration(section =>
+            {
+                section.Header().BorderBottom(1).Padding(5).Row(row =>
+                {
+                    row.RelativeColumn().AlignRight().Text("Date");
+                    row.RelativeColumn().AlignRight().Text("Distance");
+                    row.RelativeColumn().AlignRight().Text("Duration");
+                    row.RelativeColumn().AlignRight().Text("Rating");
+                    row.RelativeColumn().AlignRight().Text("Participants");
+                    row.RelativeColumn().AlignRight().Text("Vehicle");
+                });
+
+                section.Content().Stack(stack =>
+                {
+                    foreach (var log in _tourModel.Log)
+                    {
+                        stack.Item().Padding(5).Row(row =>
+                        {
+                            row.RelativeColumn().AlignRight().Text(log.Date.ToShortDateString());
+                            row.RelativeColumn().AlignRight().Text(log.Duration);
+                            row.RelativeColumn().AlignRight().Text(ReportGenerator.DistanceToString(log.Distance));
+                            row.RelativeColumn().AlignRight().Text(log.Rating.ToString("P0"));
+                            row.RelativeColumn().AlignRight().Text(log.ParticipantCount);
+                            row.RelativeColumn().AlignRight().Text(log.Vehicle);
+                        });
+
+                        if (!String.IsNullOrEmpty(log.Notes))
+                            stack.Item().AlignCenter().Padding(5).PaddingTop(0).Text(log.Notes);
+
+                        stack.Item().BorderBottom(1).BorderColor("CCC");
+                    }
                 });
             });
         }
