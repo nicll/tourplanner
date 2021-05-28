@@ -15,7 +15,8 @@ namespace TourPlanner.Core.Models
         private double _distance;
         private TimeSpan _duration;
         private float _rating;
-        private string _notes;
+        private int _participants;
+        private string _vehicle, _notes;
 
         /// <summary>
         /// A unique ID for identifying the log entry.
@@ -56,6 +57,25 @@ namespace TourPlanner.Core.Models
         {
             get => _rating;
             set => _tracker.SetProperty(ref _rating, value);
+        }
+
+        /// <summary>
+        /// The number of people that participated on this tour.
+        /// </summary>
+        public int ParticipantCount
+        {
+            get => _participants;
+            set => _tracker.SetProperty(ref _participants, value);
+        }
+
+        /// <summary>
+        /// The vehicle used on this tour.
+        /// </summary>
+        [MaxLength(64)]
+        public string Vehicle
+        {
+            get => _vehicle ?? String.Empty;
+            set => _tracker.SetProperty(ref _vehicle, value);
         }
 
         /// <summary>
