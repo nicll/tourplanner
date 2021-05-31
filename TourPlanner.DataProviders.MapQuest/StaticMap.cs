@@ -70,11 +70,5 @@ namespace TourPlanner.DataProviders.MapQuest
 
         private static string GetRelativeRouteImagePath(Route route)
             => RelativeImageContainerPath + GetRouteImageFilename(route);
-
-        private static void EnsureDirectoryExists(string path)
-        {
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
-        }
     }
 }

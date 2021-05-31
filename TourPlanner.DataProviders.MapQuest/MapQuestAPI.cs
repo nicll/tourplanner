@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using log4net;
@@ -19,6 +20,12 @@ namespace TourPlanner.DataProviders.MapQuest
             _client = client;
             _apiKey = apiKey;
             _timeout = timeout;
+        }
+
+        internal static void EnsureDirectoryExists(string path)
+        {
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
         }
     }
 }

@@ -52,6 +52,8 @@ namespace TourPlanner.DataProviders.MapQuest
 
         private async Task FetchIcons(Route route)
         {
+            EnsureDirectoryExists(RelativeImageContainerPath);
+
             var newSteps = new List<Step>();
             foreach (var step in route.Steps)
             {
