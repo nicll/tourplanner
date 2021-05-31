@@ -23,7 +23,7 @@ namespace TourPlanner.GUI
             _log.Debug("Now loading config file \"" + configFilePath + "\".");
             var configFile = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddXmlFile(configFilePath)
+                .AddXmlFile(configFilePath, false)
                 .Build();
 
             var section = configFile.GetSection(nameof(TourPlanner));
