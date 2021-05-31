@@ -45,7 +45,7 @@
                         <MenuItem Header="_Delete Tour" Command="{Binding DeleteTourCommand}" IsEnabled="{Binding SelectedTour, Converter={StaticResource notNullConverter}}"/>
                     </MenuItem>
                     <MenuItem Header="Tour _Logs">
-                        <MenuItem Header="_Add Tour Log Entry" Command="{Binding AddTourLogCommand}"/>
+                        <MenuItem Header="_Add Tour Log Entry" Command="{Binding AddTourLogCommand}" IsEnabled="{Binding SelectedTourLog, Converter={StaticResource notNullConverter}}"/>
                         <MenuItem Header="_Delete Tour Log Entry" Command="{Binding DeleteTourLogCommand}" IsEnabled="{Binding SelectedTourLogEntry, Converter={StaticResource notNullConverter}}"/>
                     </MenuItem>
                 </MenuItem>
