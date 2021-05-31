@@ -18,6 +18,8 @@ CREATE DATABASE tp
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;
 
+GRANT CONNECT ON DATABASE tp TO tp_user;
+
 CREATE EXTENSION "uuid-ossp"
     SCHEMA public
     VERSION "1.1";
@@ -64,3 +66,7 @@ CREATE TABLE public.log_entries
         ON UPDATE NO ACTION
         ON DELETE CASCADE
 );
+
+GRANT ALL ON TABLE public.tours TO tp_user;
+GRANT ALL ON TABLE public.steps TO tp_user;
+GRANT ALL ON TABLE public.log_entries TO tp_user;
