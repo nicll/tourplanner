@@ -15,7 +15,7 @@ namespace TourPlanner.Core.Internal
 
         /// <summary>
         /// Checks if a property already matches a desired value.
-        /// Sets the property and notifies listeners only when necessary.
+        /// Sets the property and sets <see cref="IsChanged"/> only if necessary.
         /// </summary>
         /// <typeparam name="T">Type of the property.</typeparam>
         /// <param name="storage">Reference to the property with both getter and setter.</param>

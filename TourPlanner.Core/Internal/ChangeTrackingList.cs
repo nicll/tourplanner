@@ -67,7 +67,7 @@ namespace TourPlanner.Core.Internal
 
         public bool IsReadOnly => false;
 
-        public bool IsChanged => _items.Any(i => i.State != ChangeState.Current || (i.State == ChangeState.Current && i.Item.IsChanged));
+        public bool IsChanged => _items.Any(i => i.State != ChangeState.Current || i.Item.IsChanged);
 
         bool IList.IsFixedSize => false;
 
