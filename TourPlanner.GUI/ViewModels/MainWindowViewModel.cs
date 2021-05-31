@@ -193,7 +193,7 @@ namespace TourPlanner.GUI.ViewModels
         private async Task<bool> ExitApplication()
         {
             if (IsBusy)
-                return false;
+                return true;
 
             if (_dm.AllTours.IsChanged)
             {
@@ -415,6 +415,9 @@ namespace TourPlanner.GUI.ViewModels
 
         private void UpdateShownTours()
         {
+            if (_dm?.AllTours is null)
+                return;
+
             Func<Tour, bool> isContained = IsIncludeDescriptionChecked ? IsInNameOrDescOrNotes : IsInName;
             App.Current.Dispatcher.Invoke(() => ShownTours.Clear());
 
