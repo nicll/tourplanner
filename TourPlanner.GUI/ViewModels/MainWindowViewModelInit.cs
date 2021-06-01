@@ -15,7 +15,8 @@ namespace TourPlanner.GUI.ViewModels
         {
             Task.Run(async () =>
             {
-                FinishInitialization(await DataManager.CreateDataManager(OSInteraction.LoadConfig("connection.config"), new MapQuestApiFactory(), new PostgresDatabaseFactory(), new ReportGenerator()));
+                FinishInitialization(await DataManager.CreateDataManager(OSInteraction.LoadConfig("connection.config"),
+                    new MapQuestApiFactory(), new PostgresDatabaseFactory(), new ReportGenerator()));
                 InitializationFinished?.Invoke(this, EventArgs.Empty);
             });
         }
