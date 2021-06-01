@@ -8,7 +8,10 @@ namespace TourPlanner.DataProviders.MapQuest
 {
     internal abstract class MapQuestAPI
     {
-        internal const string RelativeImageContainerPath = @".\TourPlanner_CachedImages\";
+        internal const string
+            RelativeImageContainerPath = @".\TourPlanner_CachedImages\",
+            RelativeMapImagesPath = RelativeImageContainerPath + @"Maps\",
+            RelativeIconImagesPath = RelativeImageContainerPath + @"Icons\";
         protected static readonly ILog _log = LogManager.GetLogger(typeof(MapQuestAPI));
         protected readonly JsonSerializerOptions _jsonOpts = new() { IncludeFields = true, PropertyNameCaseInsensitive = true, Converters = { new RouteConverter() } };
         protected readonly HttpClient _client;

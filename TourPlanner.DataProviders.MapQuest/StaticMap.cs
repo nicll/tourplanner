@@ -18,7 +18,7 @@ namespace TourPlanner.DataProviders.MapQuest
 
         public async ValueTask<string> GetImage(Route route)
         {
-            EnsureDirectoryExists(RelativeImageContainerPath);
+            EnsureDirectoryExists(RelativeMapImagesPath);
 
             var imagePath = GetRelativeRouteImagePath(route);
 
@@ -30,7 +30,7 @@ namespace TourPlanner.DataProviders.MapQuest
 
         public ValueTask CleanCache(IDataManager dataManager)
         {
-            foreach (var filePath in Directory.EnumerateFiles(RelativeImageContainerPath))
+            foreach (var filePath in Directory.EnumerateFiles(RelativeMapImagesPath))
             {
                 var fileRouteId = Path.GetFileNameWithoutExtension(filePath);
 
@@ -41,7 +41,7 @@ namespace TourPlanner.DataProviders.MapQuest
                 _log.Debug("Deleted file in image cache: " + filePath);
             }
 
-            _log.Info("Cleared image cache.");
+            _log.Info("Cleared map image cache.");
             return ValueTask.CompletedTask;
         }
 
@@ -69,6 +69,6 @@ namespace TourPlanner.DataProviders.MapQuest
         }
 
         private static string GetRelativeRouteImagePath(Route route)
-            => RelativeImageContainerPath + GetRouteImageFilename(route);
+            => RelativeMapImagesPath + GetRouteImageFilename(route);
     }
 }

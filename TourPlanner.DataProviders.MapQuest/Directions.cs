@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
@@ -32,7 +33,21 @@ namespace TourPlanner.DataProviders.MapQuest
         }
 
         public ValueTask CleanCache(IDataManager dataManager)
-            => ValueTask.CompletedTask;
+        {
+            foreach (var filePath in Directory.EnumerateFiles(RelativeIconImagesPath))
+            {
+                var iconName = Path.GetFileNameWithoutExtension(filePath);
+
+                if (dataManager.AllTours.Any(t => t.Route.Steps.Any(s => Path.GetFileNameWithoutExtension(s.IconPath) == iconName)))
+                    continue; // skip if still exists
+
+                File.Delete(filePath);
+                _log.Debug("Deleted file in image cache: " + filePath);
+            }
+
+            _log.Info("Cleared icon cache.");
+            return ValueTask.CompletedTask;
+        }
 
         private async Task<Route> FetchRoute(string from, string to)
         {
@@ -52,7 +67,7 @@ namespace TourPlanner.DataProviders.MapQuest
 
         private async Task FetchIcons(Route route)
         {
-            EnsureDirectoryExists(RelativeImageContainerPath);
+            EnsureDirectoryExists(RelativeIconImagesPath);
 
             var newSteps = new List<Step>();
             foreach (var step in route.Steps)
@@ -69,7 +84,7 @@ namespace TourPlanner.DataProviders.MapQuest
             }
 
             static string MapQuestIconPathToLocalPath(string mqPath)
-                => RelativeImageContainerPath + mqPath[(mqPath.LastIndexOf('/') + 1)..];
+                => RelativeIconImagesPath + mqPath[(mqPath.LastIndexOf('/') + 1)..];
         }
     }
 }
