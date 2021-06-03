@@ -13,9 +13,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TourPlanner.DataProviders.M
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TourPlanner.Reporting.PDF", "TourPlanner.Reporting.PDF\TourPlanner.Reporting.PDF.csproj", "{5B117C92-024B-49A0-99C7-A51BF06FB8D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TourPlanner.Tests", "TourPlanner.Tests\TourPlanner.Tests.csproj", "{DF2FC4AD-16D3-4F28-9423-7C4A7ED95289}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TourPlanner.Tests", "TourPlanner.Tests\TourPlanner.Tests.csproj", "{DF2FC4AD-16D3-4F28-9423-7C4A7ED95289}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TourPlanner.Converters.Json", "TourPlanner.Converters.Json\TourPlanner.Converters.Json.csproj", "{0D029A4A-F7D2-42D6-94AD-4CC153438B6A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TourPlanner.Converters.Json", "TourPlanner.Converters.Json\TourPlanner.Converters.Json.csproj", "{0D029A4A-F7D2-42D6-94AD-4CC153438B6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TourPlanner.DB.InMemory", "TourPlanner.DB.InMemory\TourPlanner.DB.InMemory.csproj", "{ECFF3C71-A1E9-4FA9-B400-6FA5E404205F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{0D029A4A-F7D2-42D6-94AD-4CC153438B6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D029A4A-F7D2-42D6-94AD-4CC153438B6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D029A4A-F7D2-42D6-94AD-4CC153438B6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECFF3C71-A1E9-4FA9-B400-6FA5E404205F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECFF3C71-A1E9-4FA9-B400-6FA5E404205F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECFF3C71-A1E9-4FA9-B400-6FA5E404205F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECFF3C71-A1E9-4FA9-B400-6FA5E404205F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

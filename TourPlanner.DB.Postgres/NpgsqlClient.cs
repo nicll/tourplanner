@@ -11,7 +11,7 @@ using TourPlanner.Core.Models;
 
 namespace TourPlanner.DB.Postgres
 {
-    public class NpgsqlClient : IDatabaseClient
+    internal class NpgsqlClient : IDatabaseClient
     {
         private record DbTourInfo(string Name, string Image, string Description, string Start, string End, string RouteId);
 
