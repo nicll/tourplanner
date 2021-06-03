@@ -15,7 +15,7 @@ namespace TourPlanner.GUI.Views
         public MainWindowView()
         {
             InitializeComponent();
-            var vm = new MainWindowViewModelInit();
+            var vm = new MainWindowViewModel();
             DataContext = vm;
             _vmCloseHandler = vm.ExitApplicationWrapper;
         }

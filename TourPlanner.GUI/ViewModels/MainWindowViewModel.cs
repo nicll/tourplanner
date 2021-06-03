@@ -13,7 +13,7 @@ using System.Linq;
 
 namespace TourPlanner.GUI.ViewModels
 {
-    public abstract class MainWindowViewModel : ViewModelBase
+    public class MainWindowViewModel : ViewModelBase
     {
         private readonly ILog _log;
         private bool _darkMode = false, _busy = false, _searchBarVisible = false, _includeDescChecked = false;
@@ -119,7 +119,10 @@ namespace TourPlanner.GUI.ViewModels
 
         public ICommand ClearSearchTextCommand { get; }
 
-        protected MainWindowViewModel()
+        public MainWindowViewModel() : this(null)
+            => Task.Run(async () => FinishInitialization(await DependencyInitializer.InitializeRealDataManager()));
+
+        public MainWindowViewModel(IDataManager dataManager)
         {
             IsBusy = true;
             _log = LogManager.GetLogger(typeof(MainWindowViewModel));
@@ -139,6 +142,9 @@ namespace TourPlanner.GUI.ViewModels
             GenerateTourReportCommand = new AsyncCommand(GenerateTourReport);
             DelayCommand = new AsyncCommand(Delay);
             ClearSearchTextCommand = new RelayCommand(ClearSearchText);
+
+            if (dataManager is not null)
+                FinishInitialization(dataManager);
         }
 
         protected void FinishInitialization(IDataManager dataManager)
