@@ -119,8 +119,8 @@ namespace TourPlanner.GUI.ViewModels
 
         public ICommand ClearSearchTextCommand { get; }
 
-        public MainWindowViewModel() : this(null)
-            => Task.Run(async () => FinishInitialization(await DependencyInitializer.InitializeRealDataManager()));
+        public MainWindowViewModel(Func<Task<IDataManager>> dataManagerInitializer) : this(default(IDataManager))
+            => Task.Run(async () => FinishInitialization(await dataManagerInitializer()));
 
         public MainWindowViewModel(IDataManager dataManager)
         {

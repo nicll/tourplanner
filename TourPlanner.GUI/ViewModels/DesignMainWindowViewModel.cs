@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TourPlanner.Core.DataManagers;
+using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 
 namespace TourPlanner.GUI.ViewModels
 {
     public class DesignMainWindowViewModel : MainWindowViewModel
     {
-        public DesignMainWindowViewModel() : base(null)
+        public DesignMainWindowViewModel() : base(default(IDataManager))
         {
             SelectedTour = new Tour(new List<LogEntry> { new() { Date = DateTime.Now, Distance = 1.23, Duration = TimeSpan.FromMinutes(30), Rating = 0.77F }, new() })
             {
