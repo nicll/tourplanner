@@ -137,15 +137,17 @@ namespace TourPlanner.DB.Postgres
 
             using (var cmd = new NpgsqlCommand("INSERT INTO tours VALUES ", conn, trans))
             {
-                cmd.CommandText += DataToNpgsqlCommand(cmd, tours, t => t.TourId, t => t.Name, t => t.ImagePath, t => t.CustomDescription, t => t.Route.StartLocation, t => t.Route.EndLocation, t => t.Route.RouteId);
+                cmd.CommandText += FeedDataToNpgsqlCommand(cmd, tours,
+                    t => t.TourId, t => t.Name, t => t.ImagePath, t => t.CustomDescription, t => t.Route.StartLocation, t => t.Route.EndLocation, t => t.Route.RouteId);
 
                 await cmd.ExecuteNonQueryAsync();
             }
 
             using (var cmd = new NpgsqlCommand("INSERT INTO steps VALUES ", conn, trans))
             {
-                cmd.CommandText += ManyDataToNpgsqlCommand<Tour, IEnumerable<(Guid, double, string, string)>, (Guid, double, string, string)>
-                    (cmd, tours, t => t.Route.Steps.Select(s => (t.TourId, s.Distance, s.Description, s.IconPath)), x => x.Item1, x => x.Item2, x => x.Item3, x => x.Item4);
+                cmd.CommandText += FeedDataToNpgsqlCommand(cmd,
+                    tours.SelectMany(t => t.Route.Steps.Select(s => (t.TourId, s.Distance, s.Description, s.IconPath))),
+                    x => x.TourId, x => x.Distance, x => x.Description, x => x.IconPath);
 
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -156,8 +158,9 @@ namespace TourPlanner.DB.Postgres
 
             using (var cmd = new NpgsqlCommand("INSERT INTO log_entries VALUES ", conn, trans))
             {
-                cmd.CommandText += ManyDataToNpgsqlCommand<Tour, IEnumerable<(Guid, Guid, DateTime, double, TimeSpan, float, string, string, int)>, (Guid, Guid, DateTime, double, TimeSpan, float, string, string, int)>
-                    (cmd, tours, t => t.Log.Select(l => (l.LogId, t.TourId, l.Date, l.Distance, l.Duration, l.Rating, l.Notes, l.Vehicle, l.ParticipantCount)), x => x.Item1, x => x.Item2, x => x.Item3, x => x.Item4, x => x.Item5, x => x.Item6, x => x.Item7, x => x.Item8, x => x.Item9);
+                cmd.CommandText += FeedDataToNpgsqlCommand(cmd,
+                    tours.SelectMany(t => t.Log.Select(l => (l.LogId, t.TourId, l.Date, l.Distance, l.Duration, l.Rating, l.Notes, l.Vehicle, l.ParticipantCount))),
+                    x => x.LogId, x => x.TourId, x => x.Date, x => x.Distance, x => x.Duration, x => x.Rating, x => x.Notes, x => x.Vehicle, x => x.ParticipantCount);
 
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -216,7 +219,8 @@ namespace TourPlanner.DB.Postgres
                 return;
 
             using var cmd = new NpgsqlCommand("INSERT INTO log_entries VALUES ", conn, trans);
-            cmd.CommandText += DataToNpgsqlCommand(cmd, log, l => l.LogId, _ => tourId, l => l.Date, l => l.Distance, l => l.Duration, l => l.Rating, l => l.Notes, l => l.Vehicle, l => l.ParticipantCount);
+            cmd.CommandText += FeedDataToNpgsqlCommand(cmd, log,
+                l => l.LogId, _ => tourId, l => l.Date, l => l.Distance, l => l.Duration, l => l.Rating, l => l.Notes, l => l.Vehicle, l => l.ParticipantCount);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -264,7 +268,7 @@ namespace TourPlanner.DB.Postgres
             }
         }
 
-        private static string DataToNpgsqlCommand<T>(NpgsqlCommand cmd, IReadOnlyCollection<T> data, params Func<T, object>[] selectors)
+        private static string FeedDataToNpgsqlCommand<T>(NpgsqlCommand cmd, IEnumerable<T> data, params Func<T, object>[] selectors)
         {
             var sb = new StringBuilder(" ");
             int counter = 0;
@@ -282,38 +286,6 @@ namespace TourPlanner.DB.Postgres
 
                 --sb.Length;
                 sb.Append("),");
-            }
-
-            --sb.Length;
-            return sb.ToString();
-        }
-
-        private static string ManyDataToNpgsqlCommand<T, U, V>(NpgsqlCommand cmd, IReadOnlyCollection<T> data, Func<T, U> dataTransformer, params Func<V, object>[] selectors) where U : IEnumerable<V>
-        {
-            var sb = new StringBuilder(" ");
-            int counter = 0;
-
-            foreach (var rowGenerator in data)
-            {
-                var rows = dataTransformer(rowGenerator);
-
-                if (!rows.Any())
-                    continue;
-
-                foreach (var row in rows)
-                {
-                    sb.Append('(');
-
-                    foreach (var selector in selectors)
-                    {
-                        var currentParameter = "@p_" + ++counter;
-                        sb.Append(currentParameter).Append(',');
-                        cmd.Parameters.AddWithValue(currentParameter, selector(row));
-                    }
-
-                    --sb.Length;
-                    sb.Append("),");
-                }
             }
 
             --sb.Length;
