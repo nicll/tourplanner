@@ -2,14 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 using log4net;
-using System.Windows.Data;
-using System.Linq;
 
 namespace TourPlanner.GUI.ViewModels
 {
@@ -344,7 +344,7 @@ namespace TourPlanner.GUI.ViewModels
             await BusySection(async () =>
             {
                 _log.Info("Importing data from file \"" + path + "\".");
-                var tours = await OSInteraction.ImportToursFromFile(path);
+                var tours = await OSInteraction.ImportToursFromFile(path, _dm.DataMigrator);
                 OverwriteTours(tours);
                 UpdateShownTours();
             });
@@ -363,7 +363,7 @@ namespace TourPlanner.GUI.ViewModels
             await BusySection(async () =>
             {
                 _log.Info("Exporting data to file \"" + path + "\".");
-                await OSInteraction.ExportToursToFile(path, _dm.AllTours);
+                await OSInteraction.ExportToursToFile(path, _dm.AllTours, _dm.DataMigrator);
             });
         }
 

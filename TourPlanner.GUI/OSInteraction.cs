@@ -5,18 +5,17 @@ using System.Diagnostics;
 using TourPlanner.Core.Configuration;
 using TourPlanner.Core.Models;
 using log4net;
-using TourPlanner.Converters.Json;
 using System.Threading.Tasks;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using TourPlanner.Core.Interfaces;
 
 namespace TourPlanner.GUI
 {
     internal static class OSInteraction
     {
         private static readonly ILog _log = LogManager.GetLogger(typeof(OSInteraction));
-        private static readonly JsonConverter _jsonConverter = new();
 
         public static Config LoadConfig(string configFilePath)
         {
@@ -73,16 +72,16 @@ namespace TourPlanner.GUI
             return String.Empty;
         }
 
-        public static async Task<Tour[]> ImportToursFromFile(string path)
+        public static async Task<Tour[]> ImportToursFromFile(string path, IDataConverter importConverter)
         {
             using var file = File.OpenRead(path);
-            return (await _jsonConverter.ReadTours(file)).ToArray();
+            return (await importConverter.ReadTours(file)).ToArray();
         }
 
-        public static async Task ExportToursToFile(string path, ICollection<Tour> tours)
+        public static async Task ExportToursToFile(string path, ICollection<Tour> tours, IDataConverter exportConverter)
         {
             using var file = File.OpenWrite(path);
-            await _jsonConverter.WriteTours(file, tours);
+            await exportConverter.WriteTours(file, tours);
         }
 
         public static void ShowFile(string filePath)

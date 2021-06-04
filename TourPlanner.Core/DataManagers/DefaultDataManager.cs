@@ -23,13 +23,16 @@ namespace TourPlanner.Core.DataManagers
 
         public IReportGenerator ReportGenerator { get; }
 
+        public IDataConverter DataMigrator { get; }
+
         public IChangeTrackingCollection<Tour> AllTours => _tours;
 
-        internal DefaultDataManager(IDataProviderFactory dpFactory, IDatabaseClientFactory dbFactory, IReportGenerator reports)
+        internal DefaultDataManager(IDataProviderFactory dpFactory, IDatabaseClientFactory dbFactory, IReportGenerator reports, IDataConverter migrator)
         {
             _dpFactory = dpFactory;
             _dbFactory = dbFactory;
             ReportGenerator = reports;
+            DataMigrator = migrator;
         }
 
         private async Task Initialize(Config config)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using TourPlanner.Converters.Json;
 using TourPlanner.Core.DataManagers;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.DataProviders.MapQuest;
@@ -13,10 +14,10 @@ namespace TourPlanner.GUI
     {
         public static async Task<IDataManager> InitializeRealDataManager()
             => await DataManager.CreateDataManager(OSInteraction.LoadConfig("connection.config"),
-                new MapQuestApiFactory(), new PostgresDatabaseFactory(), new ReportGenerator());
+                new MapQuestApiFactory(), new PostgresDatabaseFactory(), new ReportGenerator(), new JsonConverter());
 
         public static async Task<IDataManager> InitializeDummyDataManager()
             => await DataManager.CreateDataManager(OSInteraction.LoadConfig("connection.config"),
-                new MapQuestApiFactory(), new InMemoryDbFactory(), new ReportGenerator());
+                new MapQuestApiFactory(), new InMemoryDbFactory(), new ReportGenerator(), new JsonConverter());
     }
 }
