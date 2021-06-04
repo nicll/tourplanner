@@ -28,7 +28,10 @@ namespace TourPlanner.DataProviders.MapQuest
         internal static void EnsureDirectoryExists(string path)
         {
             if (!Directory.Exists(path))
+            {
                 Directory.CreateDirectory(path);
+                _log.Info("Created directory: " + path);
+            }
         }
     }
 }

@@ -52,8 +52,10 @@ namespace TourPlanner.DataProviders.MapQuest
             _log.Debug("Image will be saved to: " + imagePath);
 
             using var cts = new CancellationTokenSource(_timeout);
-            var image = await _client.GetByteArrayAsync(String.Format(ImageRequestFormat, _apiKey, route.RouteId), cts.Token);
+            var response = await _client.GetAsync(String.Format(ImageRequestFormat, _apiKey, route.RouteId), cts.Token);
             _log.Debug("Received response from API.");
+            response.EnsureSuccessStatusCode();
+            var image = await response.Content.ReadAsByteArrayAsync();
 
             await File.WriteAllBytesAsync(imagePath, image);
             _log.Info("Saved image for route \"" + route.RouteId + "\" in \"" + imagePath + "\".");

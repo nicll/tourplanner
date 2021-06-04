@@ -54,10 +54,11 @@ namespace TourPlanner.DataProviders.MapQuest
             _log.Debug("Requesting route from API from=\"" + from + "\" to=\"" + to + "\"");
             var requestUrl = String.Format(DirectionsRequestFormat, _apiKey, from, to);
             using var cts = new CancellationTokenSource(_timeout);
-            var response = await _client.GetStreamAsync(requestUrl, cts.Token);
+            var response = await _client.GetAsync(requestUrl, cts.Token);
             _log.Debug("Received response from API.");
+            response.EnsureSuccessStatusCode();
 
-            var route = await JsonSerializer.DeserializeAsync<Route>(response, _jsonOpts) with { StartLocation = from, EndLocation = to };
+            var route = await JsonSerializer.DeserializeAsync<Route>(await response.Content.ReadAsStreamAsync(), _jsonOpts) with { StartLocation = from, EndLocation = to };
             _log.Info("Received proper response from API: RouteId=" + route.RouteId);
 
             await FetchIcons(route);
@@ -68,6 +69,7 @@ namespace TourPlanner.DataProviders.MapQuest
         private async Task FetchIcons(Route route)
         {
             EnsureDirectoryExists(RelativeIconImagesPath);
+            _log.Info("Requesting icons for route: " + route.RouteId);
 
             var newSteps = new List<Step>();
             foreach (var step in route.Steps)
@@ -76,8 +78,12 @@ namespace TourPlanner.DataProviders.MapQuest
 
                 if (!File.Exists(localPath))
                 {
-                    var iconData = await _client.GetByteArrayAsync(step.IconPath);
+                    _log.Debug("Fetching icon: " + step.IconPath);
+                    var response = await _client.GetAsync(step.IconPath);
+                    response.EnsureSuccessStatusCode();
+                    var iconData = await response.Content.ReadAsByteArrayAsync();
                     await File.WriteAllBytesAsync(localPath, iconData);
+                    _log.Debug("Saved icon to: " + localPath);
                 }
 
                 newSteps.Add(step with { IconPath = localPath });
