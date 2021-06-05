@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using TourPlanner.Core.Exceptions;
 using TourPlanner.Core.Models;
 using TourPlanner.DataProviders.MapQuest.Models;
 using CoreRoute = TourPlanner.Core.Models.Route;
@@ -15,6 +16,10 @@ namespace TourPlanner.DataProviders.MapQuest
         {
             var wrapper = JsonSerializer.Deserialize<RouteWrapper>(ref reader, options);
             ref readonly var internalRoute = ref wrapper.Route;
+
+            if (internalRoute.SessionId is null)
+                throw new DataProviderExcpetion("Received invalid replay from MapQuest.");
+
             return new CoreRoute { RouteId = internalRoute.SessionId, TotalDistance = internalRoute.Distance, Steps = ManeuversToSteps(internalRoute.Legs[0].Maneuvers) };
         }
 

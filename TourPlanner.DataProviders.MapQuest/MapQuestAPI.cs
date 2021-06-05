@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using log4net;
+using TourPlanner.Core.Exceptions;
 
 namespace TourPlanner.DataProviders.MapQuest
 {
@@ -27,10 +28,18 @@ namespace TourPlanner.DataProviders.MapQuest
 
         internal static void EnsureDirectoryExists(string path)
         {
-            if (!Directory.Exists(path))
+            try
             {
-                Directory.CreateDirectory(path);
-                _log.Info("Created directory: " + path);
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                    _log.Info("Created directory: " + path);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Error("An error occured while creating a directory: " + path, ex);
+                throw new DataProviderExcpetion("An error occured while creating a directory: " + path, ex);
             }
         }
     }

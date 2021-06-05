@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TourPlanner.Core.Exceptions;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 
@@ -34,59 +35,87 @@ namespace TourPlanner.DataProviders.MapQuest
 
         public ValueTask CleanCache(IDataManager dataManager)
         {
-            foreach (var filePath in Directory.EnumerateFiles(RelativeIconImagesPath))
+            try
             {
-                var iconName = Path.GetFileNameWithoutExtension(filePath);
+                EnsureDirectoryExists(RelativeIconImagesPath);
 
-                if (dataManager.AllTours.Any(t => t.Route.Steps.Any(s => Path.GetFileNameWithoutExtension(s.IconPath) == iconName)))
-                    continue; // skip if still exists
+                foreach (var filePath in Directory.EnumerateFiles(RelativeIconImagesPath))
+                {
+                    var iconName = Path.GetFileNameWithoutExtension(filePath);
 
-                File.Delete(filePath);
-                _log.Debug("Deleted file in image cache: " + filePath);
+                    if (dataManager.AllTours.Any(t => t.Route.Steps.Any(s => Path.GetFileNameWithoutExtension(s.IconPath) == iconName)))
+                        continue; // skip if still exists
+
+                    File.Delete(filePath);
+                    _log.Debug("Deleted file in image cache: " + filePath);
+                }
+
+                _log.Info("Cleared icon cache.");
+            }
+            catch (Exception ex)
+            {
+                _log.Error("An error occured while cleaning the icon cache.", ex);
+                throw new DataProviderExcpetion("An error occured while cleaning the icon cache.", ex);
             }
 
-            _log.Info("Cleared icon cache.");
             return ValueTask.CompletedTask;
         }
 
         private async Task<Route> FetchRoute(string from, string to)
         {
-            _log.Debug("Requesting route from API from=\"" + from + "\" to=\"" + to + "\"");
-            var requestUrl = String.Format(DirectionsRequestFormat, _apiKey, from, to);
-            using var cts = new CancellationTokenSource(_timeout);
-            var response = await _client.GetAsync(requestUrl, cts.Token);
-            _log.Debug("Received response from API.");
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                _log.Debug("Requesting route from API from=\"" + from + "\" to=\"" + to + "\"");
+                var requestUrl = String.Format(DirectionsRequestFormat, _apiKey, from, to);
+                using var cts = new CancellationTokenSource(_timeout);
 
-            var route = await JsonSerializer.DeserializeAsync<Route>(await response.Content.ReadAsStreamAsync(), _jsonOpts) with { StartLocation = from, EndLocation = to };
-            _log.Info("Received proper response from API: RouteId=" + route.RouteId);
+                var response = await _client.GetAsync(requestUrl, cts.Token);
+                _log.Debug("Received response from API.");
+                response.EnsureSuccessStatusCode();
 
-            await FetchIcons(route);
+                var route = await JsonSerializer.DeserializeAsync<Route>(await response.Content.ReadAsStreamAsync(), _jsonOpts) with { StartLocation = from, EndLocation = to };
+                _log.Info("Received proper response from API: RouteId=\"" + route.RouteId + "\"");
 
-            return route;
+                await FetchIcons(route);
+
+                return route;
+            }
+            catch (Exception ex) when (ex is not DataProviderExcpetion)
+            {
+                _log.Error("An error occured while fetching route data.", ex);
+                throw new DataProviderExcpetion("An error occured while fetching route data.", ex);
+            }
         }
 
         private async Task FetchIcons(Route route)
         {
-            EnsureDirectoryExists(RelativeIconImagesPath);
-            _log.Info("Requesting icons for route: " + route.RouteId);
-
-            var newSteps = new List<Step>();
-            foreach (var step in route.Steps)
+            try
             {
-                var localPath = MapQuestIconPathToLocalPath(step.IconPath);
+                EnsureDirectoryExists(RelativeIconImagesPath);
+                _log.Info("Requesting icons for route: " + route.RouteId);
 
-                if (!File.Exists(localPath))
+                var newSteps = new List<Step>();
+                foreach (var step in route.Steps)
                 {
-                    _log.Debug("Fetching icon: " + step.IconPath);
-                    var response = await _client.GetAsync(step.IconPath);
-                    response.EnsureSuccessStatusCode();
-                    var iconData = await response.Content.ReadAsByteArrayAsync();
-                    await File.WriteAllBytesAsync(localPath, iconData);
-                    _log.Debug("Saved icon to: " + localPath);
-                }
+                    var localPath = MapQuestIconPathToLocalPath(step.IconPath);
 
-                newSteps.Add(step with { IconPath = localPath });
+                    if (!File.Exists(localPath))
+                    {
+                        _log.Debug("Fetching icon: " + step.IconPath);
+                        var response = await _client.GetAsync(step.IconPath);
+                        response.EnsureSuccessStatusCode();
+                        var iconData = await response.Content.ReadAsByteArrayAsync();
+                        await File.WriteAllBytesAsync(localPath, iconData);
+                        _log.Debug("Saved icon to: " + localPath);
+                    }
+
+                    newSteps.Add(step with { IconPath = localPath });
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Error("An error occured while fetching route icons.", ex);
+                throw new DataProviderExcpetion("An error occured while fetching route icons.", ex);
             }
 
             static string MapQuestIconPathToLocalPath(string mqPath)

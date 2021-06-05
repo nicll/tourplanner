@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using TourPlanner.Core.Exceptions;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 
@@ -30,35 +31,54 @@ namespace TourPlanner.DataProviders.MapQuest
 
         public ValueTask CleanCache(IDataManager dataManager)
         {
-            foreach (var filePath in Directory.EnumerateFiles(RelativeMapImagesPath))
+            try
             {
-                var fileRouteId = Path.GetFileNameWithoutExtension(filePath);
+                EnsureDirectoryExists(RelativeMapImagesPath);
 
-                if (dataManager.AllTours.Any(t => t.Route.RouteId == fileRouteId))
-                    continue; // skip if still exists
+                foreach (var filePath in Directory.EnumerateFiles(RelativeMapImagesPath))
+                {
+                    var fileRouteId = Path.GetFileNameWithoutExtension(filePath);
 
-                File.Delete(filePath);
-                _log.Debug("Deleted file in image cache: " + filePath);
+                    if (dataManager.AllTours.Any(t => t.Route.RouteId == fileRouteId))
+                        continue; // skip if still exists
+
+                    File.Delete(filePath);
+                    _log.Debug("Deleted file in image cache: " + filePath);
+                }
+
+                _log.Info("Cleared map image cache.");
+            }
+            catch (Exception ex)
+            {
+                _log.Error("An error occured while cleaning the map image cache.", ex);
+                throw new DataProviderExcpetion("An error occured while cleaning the map image cache.", ex);
             }
 
-            _log.Info("Cleared map image cache.");
             return ValueTask.CompletedTask;
         }
 
         private async Task DownloadImage(Route route)
         {
-            _log.Debug("Requesting image for route from API: RouteId=\"" + route.RouteId + "\"");
-            var imagePath = GetRelativeRouteImagePath(route);
-            _log.Debug("Image will be saved to: " + imagePath);
+            try
+            {
+                _log.Debug("Requesting image for route from API: RouteId=\"" + route.RouteId + "\"");
+                var imagePath = GetRelativeRouteImagePath(route);
+                _log.Debug("Image will be saved to: " + imagePath);
 
-            using var cts = new CancellationTokenSource(_timeout);
-            var response = await _client.GetAsync(String.Format(ImageRequestFormat, _apiKey, route.RouteId), cts.Token);
-            _log.Debug("Received response from API.");
-            response.EnsureSuccessStatusCode();
-            var image = await response.Content.ReadAsByteArrayAsync();
+                using var cts = new CancellationTokenSource(_timeout);
+                var response = await _client.GetAsync(String.Format(ImageRequestFormat, _apiKey, route.RouteId), cts.Token);
+                _log.Debug("Received response from API.");
+                response.EnsureSuccessStatusCode();
+                var image = await response.Content.ReadAsByteArrayAsync();
 
-            await File.WriteAllBytesAsync(imagePath, image);
-            _log.Info("Saved image for route \"" + route.RouteId + "\" in \"" + imagePath + "\".");
+                await File.WriteAllBytesAsync(imagePath, image);
+                _log.Info("Saved image for route \"" + route.RouteId + "\" in \"" + imagePath + "\".");
+            }
+            catch (Exception ex)
+            {
+                _log.Error("An error occured while fetching a map image.", ex);
+                throw new DataProviderExcpetion("An error occured while fetching a map image.", ex);
+            }
         }
 
         private static string GetRouteImageFilename(Route route)
