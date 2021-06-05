@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using TourPlanner.Core.Configuration;
+using TourPlanner.Core.Exceptions;
 
 namespace TourPlanner.Core.Interfaces
 {
@@ -12,6 +13,8 @@ namespace TourPlanner.Core.Interfaces
         /// </summary>
         /// <param name="config">The configuration that should be used.</param>
         /// <returns>A task resulting in the provider.</returns>
+        /// <exception cref="DatabaseException">An error occured during creation of a
+        /// <see cref="IDatabaseClient"/>.</exception>
         ValueTask<IDatabaseClient> CreateDatabaseClient(DbClientConfig config);
     }
 }
