@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 using log4net;
+using TourPlanner.Core.Exceptions;
+using AdonisUI.Controls;
 
 namespace TourPlanner.GUI.ViewModels
 {
@@ -167,8 +168,18 @@ namespace TourPlanner.GUI.ViewModels
 
         private void ResetConnection()
         {
-            if (!IsBusy)
+            if (IsBusy)
+                return;
+
+            try
+            {
                 _dm.Reinitialize();
+            }
+            catch (TourPlannerException ex)
+            {
+                _log.Error("Could not reset connection due to error.", ex);
+                MessageBox.Show(App.Current.MainWindow, "An error occured while resetting the connection.");
+            }
         }
 
         private async Task Synchronize()
@@ -179,14 +190,23 @@ namespace TourPlanner.GUI.ViewModels
 
         private async Task Cleanup()
         {
-            if (!IsBusy)
+            if (IsBusy)
+                return;
+
+            try
+            {
                 await _dm.CleanCache();
+            }
+            catch (DataProviderExcpetion ex)
+            {
+                _log.Error("Cache cleanup finished with error.", ex);
+            }
         }
 
         private void SwitchTheme()
         {
             IsDarkMode = !IsDarkMode;
-            AdonisUI.ResourceLocator.SetColorScheme(Application.Current.Resources,
+            AdonisUI.ResourceLocator.SetColorScheme(App.Current.Resources,
                 IsDarkMode ? AdonisUI.ResourceLocator.DarkColorScheme : AdonisUI.ResourceLocator.LightColorScheme);
         }
 
@@ -203,28 +223,28 @@ namespace TourPlanner.GUI.ViewModels
 
             if (_dm.AllTours.IsChanged)
             {
-                var msgBoxModel = new AdonisUI.Controls.MessageBoxModel()
+                var msgBoxModel = new MessageBoxModel()
                 {
                     Caption = "Save changes?",
-                    Icon = AdonisUI.Controls.MessageBoxImage.Question,
+                    Icon = MessageBoxImage.Question,
                     IsSoundEnabled = true,
                     Text = "Do you want to synchronize any unsaved changes?",
                     Buttons = new[]
                     {
-                        new AdonisUI.Controls.MessageBoxButtonModel("Yes", AdonisUI.Controls.MessageBoxResult.Yes),
-                        new AdonisUI.Controls.MessageBoxButtonModel("No", AdonisUI.Controls.MessageBoxResult.No),
-                        new AdonisUI.Controls.MessageBoxButtonModel("Cancel", AdonisUI.Controls.MessageBoxResult.Cancel)
+                        new MessageBoxButtonModel("Yes", MessageBoxResult.Yes),
+                        new MessageBoxButtonModel("No", MessageBoxResult.No),
+                        new MessageBoxButtonModel("Cancel", MessageBoxResult.Cancel)
                     }
                 };
 
-                AdonisUI.Controls.MessageBox.Show(App.Current.MainWindow, msgBoxModel);
+                MessageBox.Show(App.Current.MainWindow, msgBoxModel);
 
                 switch (msgBoxModel.Result)
                 {
-                    case AdonisUI.Controls.MessageBoxResult.Yes:
+                    case MessageBoxResult.Yes:
                         await BusySection(_dm.SynchronizeTours);
                         break;
-                    case AdonisUI.Controls.MessageBoxResult.Cancel:
+                    case MessageBoxResult.Cancel:
                         return true;
                 }
             }
@@ -250,21 +270,30 @@ namespace TourPlanner.GUI.ViewModels
 
             await BusySection(async () =>
             {
-                var route = await _dm.CurrentDirectionsProvider.GetRoute(tourVM.StartLocation, tourVM.EndLocation);
-
-                if (route is null) // not found
+                Route route = null;
+                try { route = await _dm.CurrentDirectionsProvider.GetRoute(tourVM.StartLocation, tourVM.EndLocation); }
+                catch (DataProviderExcpetion ex)
                 {
-                    _log.Error("No possible route was found for the given inputs.");
-                    MessageBox.Show("No possible route could be found.", "Cannot add tour", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _log.Error("Route could not be loaded from data provider.", ex);
+                    MessageBox.Show(App.Current.MainWindow, "Route could not be loaded from data provider.", "Cannot add tour", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                var imagePath = await _dm.CurrentMapImageProvider.GetImage(route);
+                if (route is null) // no error but no result
+                {
+                    MessageBox.Show("No possible route could be found.", "No route", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    return;
+                }
+
+                string imagePath = null;
+                try { imagePath = await _dm.CurrentMapImageProvider.GetImage(route); }
+                catch (DataProviderExcpetion ex) { _log.Error("An error occured while download the image for route: " + route.RouteId, ex); }
 
                 if (imagePath is null)
                 {
+                    imagePath = String.Empty;
                     _log.Warn("No image was found for the given route.");
-                    MessageBox.Show("No image for the route could be loaded.", "Cannot load tour image", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(App.Current.MainWindow, "No image for the route could be loaded.", "Cannot load tour image", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
                 var newTour = new Tour
@@ -389,12 +418,10 @@ namespace TourPlanner.GUI.ViewModels
 
         private async Task GenerateTourReport()
         {
-            if (IsBusy)
+            if (IsBusy || SelectedTour is null)
                 return;
 
-            if (SelectedTour is not Tour selectedTour)
-                return;
-
+            var selectedTour = SelectedTour;
             _log.Debug("Generating tour report for tour \"" + selectedTour.TourId + "\".");
             var savePath = GetReportSavePath(selectedTour.Name);
 
