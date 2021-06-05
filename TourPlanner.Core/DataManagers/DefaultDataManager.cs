@@ -42,14 +42,14 @@ namespace TourPlanner.Core.DataManagers
             _dpImg = await _dpFactory.CreateMapImageProvider(config.MapImageApiConfig);
             _db = await _dbFactory.CreateDatabaseClient(config.DatabaseConfig);
 
-            // clear current list and merge
-            _tours.Clear();
-            _tours.AcceptChanges();
-
             // get new list and discard changes made during object creation
             var newTours = await _db.QueryTours();
             foreach (var tour in newTours)
                 tour.AcceptChanges();
+
+            // clear current list and merge
+            _tours.Clear();
+            _tours.AcceptChanges();
 
             // add new tours and merge so they don't duplicate during next sync
             _tours.AddRange(newTours);

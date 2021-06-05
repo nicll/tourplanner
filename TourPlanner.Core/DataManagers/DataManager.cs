@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Configuration;
+using TourPlanner.Core.Exceptions;
 
 namespace TourPlanner.Core.DataManagers
 {
@@ -19,6 +20,9 @@ namespace TourPlanner.Core.DataManagers
         /// <param name="reportGenerator">A generator for reports.</param>
         /// <param name="dataMigrator">A converter for importing/exporting data.</param>
         /// <returns>An initialized <see cref="IDataManager"/>.</returns>
+        /// <exception cref="DataProviderExcpetion">Occurs when initialization of an <see cref="IDirectionsProvider"/>
+        /// or <see cref="IMapImageProvider"/> fails.</exception>
+        /// <exception cref="DatabaseException">Occurs when querying the database fails.</exception>
         public static async Task<IDataManager> CreateDataManager(Config configuration, IDataProviderFactory dataProviderFactory, IDatabaseClientFactory databaseClientFactory, IReportGenerator reportGenerator, IDataConverter dataMigrator)
         {
             var dataManager = new DefaultDataManager(dataProviderFactory, databaseClientFactory, reportGenerator, dataMigrator);
