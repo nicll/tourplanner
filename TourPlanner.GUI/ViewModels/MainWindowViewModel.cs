@@ -127,7 +127,7 @@ namespace TourPlanner.GUI.ViewModels
         {
             IsBusy = true;
             _log = LogManager.GetLogger(typeof(MainWindowViewModel));
-            ResetConnectionCommand = new RelayCommand(ResetConnection);
+            ResetConnectionCommand = new AsyncCommand(ResetConnection);
             SynchronizeCommand = new AsyncCommand(Synchronize);
             CleanupCommand = new AsyncCommand(Cleanup);
             SwitchThemeCommand = new RelayCommand(SwitchTheme);
@@ -166,26 +166,36 @@ namespace TourPlanner.GUI.ViewModels
                 _dm.AllTours.Add(tour);
         }
 
-        private void ResetConnection()
+        private async Task ResetConnection()
         {
             if (IsBusy)
                 return;
 
             try
             {
-                _dm.Reinitialize();
+                await BusySection(_dm.Reinitialize);
+                UpdateShownTours();
             }
             catch (TourPlannerException ex)
             {
                 _log.Error("Could not reset connection due to error.", ex);
-                MessageBox.Show(App.Current.MainWindow, "An error occured while resetting the connection.");
+                MessageBox.Show(App.Current.MainWindow, "An error occured while resetting the connection.", "Connection reset failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                IsBusy = false;
             }
         }
 
         private async Task Synchronize()
         {
-            if (!IsBusy)
-                await BusySection(_dm.SynchronizeTours);
+            if (IsBusy)
+                return;
+
+            try { await BusySection(_dm.SynchronizeTours); }
+            catch (DatabaseException ex)
+            {
+                _log.Error("Could not synchronize changes with the database.", ex);
+                MessageBox.Show(App.Current.MainWindow, "Could not synchronize changes with the database.", "Synchronization failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                IsBusy = false;
+            }
         }
 
         private async Task Cleanup()
@@ -195,11 +205,13 @@ namespace TourPlanner.GUI.ViewModels
 
             try
             {
-                await _dm.CleanCache();
+                await BusySection(_dm.CleanCache);
             }
             catch (DataProviderExcpetion ex)
             {
                 _log.Error("Cache cleanup finished with error.", ex);
+                MessageBox.Show(App.Current.MainWindow, "An error occured while cleaning the cache.", "Error during cleanup", MessageBoxButton.OK, MessageBoxImage.Warning);
+                IsBusy = false;
             }
         }
 
@@ -242,7 +254,8 @@ namespace TourPlanner.GUI.ViewModels
                 switch (msgBoxModel.Result)
                 {
                     case MessageBoxResult.Yes:
-                        await BusySection(_dm.SynchronizeTours);
+                        try { await BusySection(_dm.SynchronizeTours); }
+                        catch (DatabaseException ex) { _log.Error("Could not synchronize changes with the database.", ex); }
                         break;
                     case MessageBoxResult.Cancel:
                         return true;
