@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TourPlanner.Core.Exceptions;
 using TourPlanner.Core.Interfaces;
 using TourPlanner.Core.Models;
 
@@ -27,6 +28,46 @@ namespace TourPlanner.DB.Postgres
             => _connectionString = connectionString;
 
         public async Task<ICollection<Tour>> QueryTours()
+        {
+            try { return await FetchTours(); }
+            catch (NpgsqlException ex)
+            {
+                _log.Error("An error occured while querying the database.", ex);
+                throw new DatabaseException("An error occured while querying the database.", ex);
+            }
+        }
+
+        public async Task BatchSynchronize(IChangeTrackingCollection<Tour> tours)
+        {
+            try
+            {
+                using var conn = await OpenConnection();
+                using var trans = await conn.BeginTransactionAsync();
+
+                await InsertTours(conn, trans, tours.NewItems);
+                await RemoveTours(conn, trans, tours.RemovedItems);
+                await UpdateTours(conn, trans, tours.ChangedItems);
+
+                await trans.CommitAsync();
+            }
+            catch (NpgsqlException ex)
+            {
+                _log.Error("An error occured while synchronizing the database with local changes.", ex);
+                throw new DatabaseException("An error occured while synchronizing the database with local changes.", ex);
+            }
+        }
+
+        private async Task<NpgsqlConnection> OpenConnection()
+        {
+            _log.Debug("Opening connection to database.");
+            var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync().ConfigureAwait(false);
+            // manual closing is not required as long as the using keyword is used
+            // also, Npgsql automatically pools connections, see https://www.npgsql.org/doc/connection-string-parameters.html
+            return conn;
+        }
+
+        private async Task<ICollection<Tour>> FetchTours()
         {
             using var conn = await OpenConnection();
             var dict = new Dictionary<Guid, DbTour>();
@@ -106,28 +147,6 @@ namespace TourPlanner.DB.Postgres
 
             _log.Info("Loaded tours from database.");
             return ret;
-        }
-
-        public async Task BatchSynchronize(IChangeTrackingCollection<Tour> tours)
-        {
-            using var conn = await OpenConnection();
-            using var trans = await conn.BeginTransactionAsync();
-
-            await InsertTours(conn, trans, tours.NewItems);
-            await RemoveTours(conn, trans, tours.RemovedItems);
-            await UpdateTours(conn, trans, tours.ChangedItems);
-
-            await trans.CommitAsync();
-        }
-
-        private async Task<NpgsqlConnection> OpenConnection()
-        {
-            _log.Debug("Opening connection to database.");
-            var conn = new NpgsqlConnection(_connectionString);
-            await conn.OpenAsync().ConfigureAwait(false);
-            // manual closing is not required as long as the using keyword is used
-            // also, Npgsql automatically pools connections, see https://www.npgsql.org/doc/connection-string-parameters.html
-            return conn;
         }
 
         private static async Task InsertTours(NpgsqlConnection conn, NpgsqlTransaction trans, IReadOnlyCollection<Tour> tours)
