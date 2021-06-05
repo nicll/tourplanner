@@ -18,7 +18,7 @@ namespace TourPlanner.DataProviders.MapQuest
             ref readonly var internalRoute = ref wrapper.Route;
 
             if (internalRoute.SessionId is null)
-                throw new DataProviderExcpetion("Received invalid replay from MapQuest.");
+                throw new DataProviderExcpetion("Received invalid reply from MapQuest.");
 
             return new CoreRoute { RouteId = internalRoute.SessionId, TotalDistance = internalRoute.Distance, Steps = ManeuversToSteps(internalRoute.Legs[0].Maneuvers) };
         }
