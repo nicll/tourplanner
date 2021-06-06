@@ -73,11 +73,10 @@ namespace TourPlanner.DataProviders.MapQuest
                 _log.Debug("Received response from API.");
                 response.EnsureSuccessStatusCode();
 
-                var route = await JsonSerializer.DeserializeAsync<Route>(await response.Content.ReadAsStreamAsync(), _jsonOpts) with { StartLocation = from, EndLocation = to };
+                var route = await JsonSerializer.DeserializeAsync<Route>(await response.Content.ReadAsStreamAsync(), _jsonOpts);
                 _log.Info("Received proper response from API: RouteId=\"" + route.RouteId + "\"");
 
-                await FetchIcons(route);
-
+                route = route with { Steps = await FetchIcons(route), StartLocation = from, EndLocation = to };
                 return route;
             }
             catch (Exception ex) when (ex is not DataProviderExcpetion)
@@ -87,7 +86,7 @@ namespace TourPlanner.DataProviders.MapQuest
             }
         }
 
-        private async Task FetchIcons(Route route)
+        private async Task<List<Step>> FetchIcons(Route route)
         {
             try
             {
@@ -111,6 +110,8 @@ namespace TourPlanner.DataProviders.MapQuest
 
                     newSteps.Add(step with { IconPath = localPath });
                 }
+
+                return newSteps;
             }
             catch (Exception ex)
             {
