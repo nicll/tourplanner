@@ -262,5 +262,39 @@ namespace TourPlanner.Tests
             Assert.AreEqual(0, _list.RemovedItems.Count);
             Assert.IsTrue(_list.All(i => !i.IsChanged));
         }
+
+        [Test, Order(18)]
+        public void RemoveRemovedItem()
+        {
+            _list.Remove(_item2);
+
+            Assert.IsFalse(_list.Remove(_item2));
+        }
+
+        [Test, Order(19)]
+        public void RemoveOutOfBoundsItem()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => _list.RemoveAt(3));
+            Assert.Throws<ArgumentOutOfRangeException>(() => _list.RemoveAt(-1));
+        }
+
+        [Test, Order(20)]
+        public void ReplaceItemViaIndex()
+        {
+            _list[1] = _item2;
+
+            Assert.IsTrue(_list.IsChanged);
+            Assert.AreEqual(3, _list.Count);
+            Assert.AreEqual(0, _list.NewItems.Count);
+            Assert.AreEqual(0, _list.ChangedItems.Count);
+            Assert.AreEqual(1, _list.RemovedItems.Count);
+            Assert.AreEqual(_item1, _list[2]);
+            Assert.AreEqual(_item2, _list[1]);
+            Assert.AreEqual(_item3, _list[0]);
+            Assert.IsTrue(_list.Contains(_item1));
+            Assert.IsTrue(_list.Contains(_item2));
+            Assert.IsTrue(_list.Contains(_item3));
+            Assert.IsFalse(_list.Contains(_item4));
+        }
     }
 }
