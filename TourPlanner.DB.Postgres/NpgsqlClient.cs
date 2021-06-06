@@ -96,7 +96,7 @@ namespace TourPlanner.DB.Postgres
                     currentTourId = reader.GetGuid(0);
 
                     if (!dict.TryGetValue(currentTourId, out var tour))
-                        throw null;
+                        throw new DatabaseException("Invalid state of \"tours\" or \"steps\" table.");
 
                     tour.Steps.Add(new()
                     {
@@ -107,7 +107,7 @@ namespace TourPlanner.DB.Postgres
                 }
             }
 
-            using (var cmd = new NpgsqlCommand("SELECT logid, tourid, date, distance, duration, rating, notes, vehicle, participants FROM log_entries", conn))
+            using (var cmd = new NpgsqlCommand("SELECT logid, tourid, date, duration, distance, rating, participants, breaks, energy, vehicle, weather, notes FROM log_entries", conn))
             {
                 using var reader = await cmd.ExecuteReaderAsync();
 
@@ -116,18 +116,21 @@ namespace TourPlanner.DB.Postgres
                     currentTourId = reader.GetGuid(1);
 
                     if (!dict.TryGetValue(currentTourId, out var tour))
-                        throw null;
+                        throw new DatabaseException("Invalid state of \"tours\" or \"log_entries\" table.");
 
                     tour.Log.Add(new()
                     {
                         LogId = reader.GetGuid(0),
                         Date = reader.GetDateTime(2),
-                        Distance = reader.GetDouble(3),
-                        Duration = reader.GetTimeSpan(4),
+                        Duration = reader.GetTimeSpan(3),
+                        Distance = reader.GetDouble(4),
                         Rating = reader.GetFloat(5),
-                        Notes = reader.GetString(6),
-                        Vehicle = reader.GetString(7),
-                        ParticipantCount = reader.GetInt32(8)
+                        ParticipantCount = reader.GetInt32(6),
+                        BreakCount = reader.GetInt32(7),
+                        EnergyUsed = reader.GetDouble(8),
+                        Vehicle = reader.GetString(9),
+                        Weather = reader.GetString(10),
+                        Notes = reader.GetString(11)
                     });
                 }
             }
@@ -175,14 +178,17 @@ namespace TourPlanner.DB.Postgres
             if (!tours.Any(t => t.Log.Any()))
                 return;
 
-            using (var cmd = new NpgsqlCommand("INSERT INTO log_entries VALUES ", conn, trans))
-            {
-                cmd.CommandText += FeedDataToNpgsqlCommand(cmd,
-                    tours.SelectMany(t => t.Log.Select(l => (l.LogId, t.TourId, l.Date, l.Distance, l.Duration, l.Rating, l.Notes, l.Vehicle, l.ParticipantCount))),
-                    x => x.LogId, x => x.TourId, x => x.Date, x => x.Distance, x => x.Duration, x => x.Rating, x => x.Notes, x => x.Vehicle, x => x.ParticipantCount);
+            foreach (var tour in tours)
+                await InsertLogs(conn, trans, tour.TourId, tour.Log.ToArray());
 
-                await cmd.ExecuteNonQueryAsync();
-            }
+            //using (var cmd = new NpgsqlCommand("INSERT INTO log_entries VALUES ", conn, trans))
+            //{
+            //    cmd.CommandText += FeedDataToNpgsqlCommand(cmd,
+            //        tours.SelectMany(t => t.Log.Select(l => (l.LogId, t.TourId, l.Date, l.Duration, l.Distance, l.Rating, l.ParticipantCount, l.BreakCount, l.EnergyUsed, l.Vehicle, l.Weather, l.Notes))),
+            //        x => x.LogId, x => x.TourId, x => x.Date, x => x.Duration, x => x.Distance, x => x.Rating, x => x.ParticipantCount, x => x.BreakCount, x => x.EnergyUsed, x => x.Vehicle, x => x.Weather, x => x.Notes);
+
+            //    await cmd.ExecuteNonQueryAsync();
+            //}
         }
 
         private static async Task RemoveTours(NpgsqlConnection conn, NpgsqlTransaction trans, IReadOnlyCollection<Tour> tours)
@@ -198,6 +204,8 @@ namespace TourPlanner.DB.Postgres
                 cmd.Parameters["@tid"].Value = tour.TourId;
                 await cmd.ExecuteNonQueryAsync();
             }
+
+            // logs are automatically deleted due to the specified ON DELETE CASCADE
         }
 
         private static async Task UpdateTours(NpgsqlConnection conn, NpgsqlTransaction trans, IReadOnlyCollection<Tour> tours)
@@ -239,7 +247,8 @@ namespace TourPlanner.DB.Postgres
 
             using var cmd = new NpgsqlCommand("INSERT INTO log_entries VALUES ", conn, trans);
             cmd.CommandText += FeedDataToNpgsqlCommand(cmd, log,
-                l => l.LogId, _ => tourId, l => l.Date, l => l.Distance, l => l.Duration, l => l.Rating, l => l.Notes, l => l.Vehicle, l => l.ParticipantCount);
+                l => l.LogId, _ => tourId, l => l.Date, l => l.Duration, l => l.Distance, l => l.Rating,
+                l => l.ParticipantCount, l => l.BreakCount, l => l.EnergyUsed, l => l.Vehicle, l => l.Weather, l => l.Notes);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -263,25 +272,33 @@ namespace TourPlanner.DB.Postgres
             if (!log.Any())
                 return;
 
-            using var cmd = new NpgsqlCommand("UPDATE log_entries SET date = @date, distance = @dist, duration = @drtn, rating = @rtng, notes = @note, vehicle = @vhcl, participants = @ptcp WHERE logid = @lid", conn, trans);
+            using var cmd = new NpgsqlCommand("UPDATE log_entries SET date = @date, duration = @drtn, distance = @dist, rating = @rtng, " +
+                "participants = @ptcp, breaks = @brks, energy = @nrgy, vehicle = @vhcl, weather = @wthr, notes = @note WHERE logid = @lid", conn, trans);
+
             cmd.Parameters.Add("@date", NpgsqlTypes.NpgsqlDbType.Date);
-            cmd.Parameters.Add("@dist", NpgsqlTypes.NpgsqlDbType.Double);
             cmd.Parameters.Add("@drtn", NpgsqlTypes.NpgsqlDbType.Interval);
+            cmd.Parameters.Add("@dist", NpgsqlTypes.NpgsqlDbType.Double);
             cmd.Parameters.Add("@rtng", NpgsqlTypes.NpgsqlDbType.Real);
-            cmd.Parameters.Add("@note", NpgsqlTypes.NpgsqlDbType.Varchar);
-            cmd.Parameters.Add("@vhcl", NpgsqlTypes.NpgsqlDbType.Varchar);
             cmd.Parameters.Add("@ptcp", NpgsqlTypes.NpgsqlDbType.Integer);
+            cmd.Parameters.Add("@brks", NpgsqlTypes.NpgsqlDbType.Integer);
+            cmd.Parameters.Add("@nrgy", NpgsqlTypes.NpgsqlDbType.Double);
+            cmd.Parameters.Add("@vhcl", NpgsqlTypes.NpgsqlDbType.Varchar);
+            cmd.Parameters.Add("@wthr", NpgsqlTypes.NpgsqlDbType.Varchar);
+            cmd.Parameters.Add("@note", NpgsqlTypes.NpgsqlDbType.Varchar);
             cmd.Parameters.Add("@lid", NpgsqlTypes.NpgsqlDbType.Uuid);
 
             foreach (var entry in log)
             {
                 cmd.Parameters["@date"].Value = entry.Date;
-                cmd.Parameters["@dist"].Value = entry.Distance;
                 cmd.Parameters["@drtn"].Value = entry.Duration;
+                cmd.Parameters["@dist"].Value = entry.Distance;
                 cmd.Parameters["@rtng"].Value = entry.Rating;
-                cmd.Parameters["@note"].Value = entry.Notes;
-                cmd.Parameters["@vhcl"].Value = entry.Vehicle;
                 cmd.Parameters["@ptcp"].Value = entry.ParticipantCount;
+                cmd.Parameters["@brks"].Value = entry.BreakCount;
+                cmd.Parameters["@nrgy"].Value = entry.EnergyUsed;
+                cmd.Parameters["@vhcl"].Value = entry.Vehicle;
+                cmd.Parameters["@wthr"].Value = entry.Weather;
+                cmd.Parameters["@note"].Value = entry.Notes;
                 cmd.Parameters["@lid"].Value = entry.LogId;
                 await cmd.ExecuteNonQueryAsync();
             }

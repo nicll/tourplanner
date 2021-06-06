@@ -54,12 +54,15 @@ CREATE TABLE public.log_entries
     logid uuid NOT NULL,
     tourid uuid NOT NULL,
     date date NOT NULL,
-    distance double precision NOT NULL,
     duration interval NOT NULL,
+    distance double precision NOT NULL,
     rating real NOT NULL,
-    notes character varying(2048) COLLATE pg_catalog."default" NOT NULL,
-    vehicle character varying(64) COLLATE pg_catalog."default" NOT NULL,
     participants integer NOT NULL,
+    breaks integer NOT NULL,
+    energy double precision NOT NULL,
+    vehicle character varying(64) COLLATE pg_catalog."default" NOT NULL,
+    weather character varying(64) COLLATE pg_catalog."default" NOT NULL,
+    notes character varying(2048) COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT log_entries_pkey PRIMARY KEY (logid),
     CONSTRAINT log_entries_tourid_fkey FOREIGN KEY (tourid)
         REFERENCES public.tours (tourid) MATCH SIMPLE

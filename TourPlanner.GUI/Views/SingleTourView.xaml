@@ -78,7 +78,7 @@
                                 <DataGridTemplateColumn Header="Icon">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Image Source="{Binding IconPath}"/>
+                                            <Image Source="{Binding IconPath, Converter={StaticResource pathConverter}}"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -113,7 +113,10 @@
                         <DataGridTextColumn Header="Distance" Binding="{Binding Distance, StringFormat='0.##'}"/>
                         <DataGridTextColumn Header="Rating" Binding="{Binding Rating, Converter={StaticResource percentConverter}, StringFormat='P0'}"/>
                         <DataGridTextColumn Header="Participant count" Binding="{Binding ParticipantCount}"/>
+                        <DataGridTextColumn Header="Break count" Binding="{Binding BreakCount}"/>
+                        <DataGridTextColumn Header="Energy used" Binding="{Binding EnergyUsed}"/>
                         <DataGridTextColumn Header="Vehicle" Binding="{Binding Vehicle}"/>
+                        <DataGridTextColumn Header="Weather" Binding="{Binding Weather}"/>
                         <DataGridTextColumn Header="Notes" Binding="{Binding Notes}"/>
                     </DataGrid.Columns>
                 </DataGrid>

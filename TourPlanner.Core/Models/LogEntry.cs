@@ -12,11 +12,11 @@ namespace TourPlanner.Core.Models
     {
         private readonly ChangeTracker _tracker = new();
         private DateTime _date;
-        private double _distance;
+        private double _distance, _energy;
         private TimeSpan _duration;
         private float _rating;
-        private int _participants;
-        private string _vehicle, _notes;
+        private int _participants, _breaks;
+        private string _vehicle, _notes, _weather;
 
         /// <summary>
         /// A unique ID for identifying the log entry.
@@ -33,21 +33,21 @@ namespace TourPlanner.Core.Models
         }
 
         /// <summary>
-        /// The travelled distance.
-        /// </summary>
-        public double Distance
-        {
-            get => _distance;
-            set => _tracker.SetProperty(ref _distance, value);
-        }
-
-        /// <summary>
         /// The time spent travelling.
         /// </summary>
         public TimeSpan Duration
         {
             get => _duration;
             set => _tracker.SetProperty(ref _duration, value);
+        }
+
+        /// <summary>
+        /// The travelled distance.
+        /// </summary>
+        public double Distance
+        {
+            get => _distance;
+            set => _tracker.SetProperty(ref _distance, value);
         }
 
         /// <summary>
@@ -69,6 +69,24 @@ namespace TourPlanner.Core.Models
         }
 
         /// <summary>
+        /// The number of breaks taken during the tour.
+        /// </summary>
+        public int BreakCount
+        {
+            get => _breaks;
+            set => _tracker.SetProperty(ref _breaks, value);
+        }
+
+        /// <summary>
+        /// The amount of energy used during the tour in kWh.
+        /// </summary>
+        public double EnergyUsed
+        {
+            get => _energy;
+            set => _tracker.SetProperty(ref _energy, value);
+        }
+
+        /// <summary>
         /// The vehicle used on this tour.
         /// </summary>
         [MaxLength(64)]
@@ -76,6 +94,16 @@ namespace TourPlanner.Core.Models
         {
             get => _vehicle ?? String.Empty;
             set => _tracker.SetProperty(ref _vehicle, value);
+        }
+
+        /// <summary>
+        /// The weather conditions during the tour.
+        /// </summary>
+        [MaxLength(64)]
+        public string Weather
+        {
+            get => _weather ?? String.Empty;
+            set => _tracker.SetProperty(ref _weather, value);
         }
 
         /// <summary>
