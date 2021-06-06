@@ -52,6 +52,9 @@ namespace TourPlanner.Core.Internal
             get => CurrentItems.ElementAt(index);
             set
             {
+                if (index >= Count)
+                    throw new ArgumentOutOfRangeException(nameof(index));
+
                 RemoveAt(index);
                 Insert(index, value);
             }
