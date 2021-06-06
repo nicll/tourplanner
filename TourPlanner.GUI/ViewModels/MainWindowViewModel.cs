@@ -378,7 +378,7 @@ namespace TourPlanner.GUI.ViewModels
             if (IsBusy)
                 return;
 
-            var path = OSInteraction.GetOpenFilePath("json", "JSON document (*.json)|*.json");
+            var path = OSInteraction.GetOpenFilePath(_dm.DataMigrator.PreferredFileExtension, _dm.DataMigrator.FileFilter);
 
             if (String.IsNullOrEmpty(path))
                 return;
@@ -397,7 +397,7 @@ namespace TourPlanner.GUI.ViewModels
             if (IsBusy)
                 return;
 
-            var path = OSInteraction.GetSaveFilePath(null, "json", "JSON document (*.json)|*.json");
+            var path = OSInteraction.GetSaveFilePath(null, _dm.DataMigrator.PreferredFileExtension, _dm.DataMigrator.FileFilter);
 
             if (String.IsNullOrEmpty(path))
                 return;

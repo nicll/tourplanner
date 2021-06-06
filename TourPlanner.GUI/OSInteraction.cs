@@ -80,7 +80,7 @@ namespace TourPlanner.GUI
 
         public static async Task ExportToursToFile(string path, ICollection<Tour> tours, IDataConverter exportConverter)
         {
-            using var file = File.OpenWrite(path);
+            using var file = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
             await exportConverter.WriteTours(file, tours);
         }
 

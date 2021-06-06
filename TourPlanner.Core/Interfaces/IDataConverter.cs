@@ -17,6 +17,11 @@ namespace TourPlanner.Core.Interfaces
         string PreferredFileExtension { get; }
 
         /// <summary>
+        /// The file filter used when selecting files in open/save dialogs
+        /// </summary>
+        string FileFilter { get; }
+
+        /// <summary>
         /// Display name of the converter.
         /// </summary>
         string DisplayName { get; }
