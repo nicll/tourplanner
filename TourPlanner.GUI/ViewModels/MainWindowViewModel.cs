@@ -387,6 +387,14 @@ namespace TourPlanner.GUI.ViewModels
             {
                 _log.Info("Importing data from file \"" + path + "\".");
                 var tours = await OSInteraction.ImportToursFromFile(path, _dm.DataMigrator);
+
+                if (tours is null)
+                {
+                    _log.Error("Importing data failed.");
+                    MessageBox.Show(App.Current.MainWindow, "Could not import data.", "Import failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
                 OverwriteTours(tours);
                 UpdateShownTours();
             });

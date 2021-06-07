@@ -75,7 +75,7 @@ namespace TourPlanner.GUI
         public static async Task<Tour[]> ImportToursFromFile(string path, IDataConverter importConverter)
         {
             using var file = File.OpenRead(path);
-            return (await importConverter.ReadTours(file)).ToArray();
+            return (await importConverter.ReadTours(file))?.ToArray();
         }
 
         public static async Task ExportToursToFile(string path, ICollection<Tour> tours, IDataConverter exportConverter)
