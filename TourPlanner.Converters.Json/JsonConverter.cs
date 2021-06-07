@@ -11,7 +11,7 @@ namespace TourPlanner.Converters.Json
     public class JsonConverter : IDataConverter
     {
         private static readonly JsonSerializerOptions _jsonOpts = new()
-            { AllowTrailingCommas = false, Converters = { new TimeSpanConverter(), new TourConverter() }, IncludeFields = false, PropertyNameCaseInsensitive = false };
+            { AllowTrailingCommas = false, Converters = { new TimeSpanConverter(), new TourConverter() }, IncludeFields = true, PropertyNameCaseInsensitive = false };
 
         public string PreferredFileExtension => "json";
 
