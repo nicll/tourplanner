@@ -11,9 +11,13 @@ namespace TourPlanner.Reporting.PDF
     internal class SummaryReportDocument : IDocument
     {
         private readonly ICollection<Tour> _toursModel;
+        private readonly LogEntry[] _logsModel; // for fast access
 
         public SummaryReportDocument(ICollection<Tour> toursModel)
-            => _toursModel = toursModel;
+        {
+            _toursModel = toursModel;
+            _logsModel = toursModel.SelectMany(t => t.Log).ToArray();
+        }
 
         public DocumentMetadata GetMetadata()
             => new() { Title = "TourPlanner - Summary Report", PdfA = true };
@@ -36,11 +40,9 @@ namespace TourPlanner.Reporting.PDF
             {
                 row.RelativeColumn().Stack(stack =>
                 {
-                    stack.Item().Text("Summary of All Tours", TextStyle.Default.Size(20));
-                    stack.Item().Text("Listing " + _toursModel.Count + " tours.");
+                    stack.Item().Text("Summary of all tours", TextStyle.Default.Size(20));
+                    stack.Item().Text("Listing " + _toursModel.Count + " tours and " + _logsModel.Length + " logs.");
                 });
-
-                row.ConstantColumn(100).Height(50).Placeholder();
             });
         }
 
@@ -49,12 +51,13 @@ namespace TourPlanner.Reporting.PDF
             container.PaddingVertical(40).Stack(stack =>
             {
                 stack.Spacing(5);
-                stack.Item().Element(ComposeListing);
-                stack.Item().Element(ComposeTotals);
+                stack.Item().Element(ComposeTourListing);
+                stack.Item().Element(ComposeTourTotals);
+                stack.Item().Element(ComposeLogTotals);
             });
         }
 
-        private void ComposeListing(IContainer container)
+        private void ComposeTourListing(IContainer container)
         {
             container.PaddingVertical(10).Decoration(decoration =>
             {
@@ -80,12 +83,12 @@ namespace TourPlanner.Reporting.PDF
             });
         }
 
-        private void ComposeTotals(IContainer container)
+        private void ComposeTourTotals(IContainer container)
         {
             container.Background("EEE").Padding(10).Stack(stack =>
             {
                 stack.Spacing(5);
-                stack.Item().Text("Statistical Summary", TextStyle.Default.Size(14));
+                stack.Item().Text("Statistical Summary of Tours", TextStyle.Default.Size(14));
 
                 if (!_toursModel.Any())
                 {
@@ -98,6 +101,27 @@ namespace TourPlanner.Reporting.PDF
                 stack.Item().Text("Shortest tour: " + _toursModel.Aggregate((min, t) => min.Route.TotalDistance < t.Route.TotalDistance ? min : t).Name);
                 stack.Item().Text("Longest tour: " + _toursModel.Aggregate((max, t) => max.Route.TotalDistance > t.Route.TotalDistance ? max : t).Name);
                 stack.Item().Text("Summed total distance: " + ReportGenerator.DistanceToString(_toursModel.Sum(t => t.Route.TotalDistance)));
+            });
+        }
+
+        private void ComposeLogTotals(IContainer container)
+        {
+            container.Background("EEE").Padding(10).Stack(stack =>
+            {
+                stack.Spacing(5);
+                stack.Item().Text("Statistical Summary of Tour Logs", TextStyle.Default.Size(14));
+
+                if (!_logsModel.Any())
+                {
+                    stack.Item().Text("No logs available.");
+                    return;
+                }
+
+                stack.Item().Text("Total number of logs: " + _logsModel.Length);
+                stack.Item().Text("Total time spent on tours: " + TimeSpan.FromSeconds(_logsModel.Sum(l => l.Duration.TotalSeconds)));
+                stack.Item().Text("Total distance travelled: " + ReportGenerator.DistanceToString(_logsModel.Sum(l => l.Distance)));
+                stack.Item().Text("Average rating of all tours: " + _logsModel.Average(l => l.Rating).ToString("P0"));
+                stack.Item().Text("Average amount of energy used: " + _logsModel.Average(l => l.EnergyUsed) + " kWh");
             });
         }
 
