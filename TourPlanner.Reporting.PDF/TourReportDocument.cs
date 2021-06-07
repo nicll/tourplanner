@@ -18,7 +18,10 @@ namespace TourPlanner.Reporting.PDF
             => _tourModel = tourModel;
 
         public async Task LoadImage()
-            => _imageData = await File.ReadAllBytesAsync(_tourModel.ImagePath).ConfigureAwait(false);
+        {
+            try { _imageData = await File.ReadAllBytesAsync(_tourModel.ImagePath).ConfigureAwait(false); }
+            catch (IOException) { /* continue without image */ }
+        }
 
         public DocumentMetadata GetMetadata()
             => new() { Title = "TourPlanner - Tour Report", PdfA = true };
@@ -47,7 +50,8 @@ namespace TourPlanner.Reporting.PDF
                     stack.Item().Text("Total distance: " + ReportGenerator.DistanceToString(_tourModel.Route.TotalDistance));
                 });
 
-                row.ConstantColumn(160).Height(80).Image(_imageData, ImageScaling.FitArea);
+                if (_imageData is not null)
+                    row.ConstantColumn(160).Height(80).Image(_imageData, ImageScaling.FitArea);
             });
         }
 
