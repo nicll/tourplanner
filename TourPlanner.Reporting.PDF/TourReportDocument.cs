@@ -113,11 +113,12 @@ namespace TourPlanner.Reporting.PDF
                 section.Header().BorderBottom(1).Padding(5).Row(row =>
                 {
                     row.RelativeColumn().AlignRight().Text("Date");
-                    row.RelativeColumn().AlignRight().Text("Distance");
                     row.RelativeColumn().AlignRight().Text("Duration");
+                    row.RelativeColumn().AlignRight().Text("Distance");
                     row.RelativeColumn().AlignRight().Text("Rating");
                     row.RelativeColumn().AlignRight().Text("Participants");
-                    row.RelativeColumn().AlignRight().Text("Vehicle");
+                    row.RelativeColumn().AlignRight().Text("Breaks");
+                    row.RelativeColumn().AlignRight().Text("Energy used");
                 });
 
                 section.Content().Stack(stack =>
@@ -131,11 +132,36 @@ namespace TourPlanner.Reporting.PDF
                             row.RelativeColumn().AlignRight().Text(ReportGenerator.DistanceToString(log.Distance));
                             row.RelativeColumn().AlignRight().Text(log.Rating.ToString("P0"));
                             row.RelativeColumn().AlignRight().Text(log.ParticipantCount);
-                            row.RelativeColumn().AlignRight().Text(log.Vehicle);
+                            row.RelativeColumn().AlignRight().Text(log.BreakCount);
+                            row.RelativeColumn().AlignRight().Text(log.EnergyUsed);
                         });
 
+                        if (!String.IsNullOrEmpty(log.Vehicle))
+                        {
+                            stack.Item().Padding(5).PaddingTop(0).Row(row =>
+                            {
+                                row.RelativeColumn(1).AlignLeft().Text("Vehicle:");
+                                row.RelativeColumn(4).AlignLeft().Text(log.Vehicle);
+                            });
+                        }
+
+                        if (!String.IsNullOrEmpty(log.Weather))
+                        {
+                            stack.Item().Padding(5).PaddingTop(0).Row(row =>
+                            {
+                                row.RelativeColumn(1).AlignLeft().Text("Weather:");
+                                row.RelativeColumn(4).AlignLeft().Text(log.Weather);
+                            });
+                        }
+
                         if (!String.IsNullOrEmpty(log.Notes))
-                            stack.Item().AlignCenter().Padding(5).PaddingTop(0).Text(log.Notes);
+                        {
+                            stack.Item().Padding(5).PaddingTop(0).Row(row =>
+                            {
+                                row.RelativeColumn(1).AlignLeft().Text("Notes:");
+                                row.RelativeColumn(4).AlignLeft().Text(log.Notes);
+                            });
+                        }
 
                         stack.Item().BorderBottom(1).BorderColor("CCC");
                     }
