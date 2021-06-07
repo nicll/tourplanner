@@ -9,7 +9,7 @@ namespace TourPlanner.Core.Internal
 {
     internal class ChangeTrackingList<T> : IChangeTrackingList<T> where T : class, IChangeTracking
     {
-        private record ItemEntry<T> { public ChangeState State; public T Item; };
+        private record ItemEntry<TItem> { public ChangeState State; public T Item; };
         private readonly object _syncRoot = new();
         private readonly List<ItemEntry<T>> _items = new();
 
