@@ -42,7 +42,7 @@ namespace TourPlanner.Core.Models
         }
 
         /// <summary>
-        /// The travelled distance.
+        /// The travelled distance in km.
         /// </summary>
         public double Distance
         {
